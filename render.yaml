@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: skillswap-backend
+    env: node
+    # Since our backend is in a subfolder, we tell Render to run commands from there
+    rootDir: backend
+    # Command to install dependencies
+    buildCommand: npm install
+    # Command to start the server
+    startCommand: node server.js
+    # Ensure Render uses a recent Node.js version
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      # We define MONGO_URI here but leave it empty so you can securely add it in the Render Dashboard
+      - key: MONGO_URI
+        sync: false
