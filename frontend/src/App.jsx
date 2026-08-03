@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Signup from './pages/Signup';
@@ -77,6 +78,7 @@ function App() {
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
+        <SpeedInsights />
       </div>
     </Router>
   );
