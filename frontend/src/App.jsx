@@ -1,11 +1,31 @@
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
-import { Bell } from 'lucide-react';
+import Signup from './pages/Signup';
+import Signin from './pages/Signin';
+import Settings from './pages/Settings';
+import { Bell, User } from 'lucide-react';
 
 function Navbar() {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+  const [profilePicture, setProfilePicture] = useState('');
+  
+  useEffect(() => {
+    if (userId) {
+      axios.get(`http://localhost:5000/api/users/${userId}`)
+        .then(res => setProfilePicture(res.data.profilePicture))
+        .catch(err => console.error(err));
+    }
+  }, [userId, location.pathname]); // Re-fetch on navigation (e.g. returning from settings)
+
+  // Hide navbar on auth pages
+  if (['/signup', '/signin'].includes(location.pathname)) {
+    return null;
+  }
 
   return (
     <nav className="bg-white border-b border-slate-200 px-8 py-0 flex items-center justify-between sticky top-0 z-40">
@@ -30,9 +50,13 @@ function Navbar() {
         <button className="text-slate-500 hover:text-slate-700">
           <Bell size={20} />
         </button>
-        <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 cursor-pointer">
-          <img src="https://i.pravatar.cc/150?img=47" alt="Profile" className="w-full h-full object-cover" />
-        </div>
+        <Link to="/settings" className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 cursor-pointer block hover:ring-2 hover:ring-blue-500 transition-all flex items-center justify-center bg-slate-100 text-slate-400">
+          {profilePicture ? (
+            <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = ''; setProfilePicture(''); }} />
+          ) : (
+            <User size={18} />
+          )}
+        </Link>
       </div>
     </nav>
   );
@@ -41,13 +65,16 @@ function Navbar() {
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#f3f2ef] font-sans text-[#000000e6]">
+      <div className="min-h-screen bg-[#f9fafb] font-sans text-[#000000e6]">
         <Navbar />
         <main className="max-w-[1200px] mx-auto py-8 px-6">
           <Routes>
-            <Route path="/" element={<Navigate to="/onboarding" />} />
+            <Route path="/" element={<Navigate to="/signup" />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/signin" element={<Signin />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
       </div>

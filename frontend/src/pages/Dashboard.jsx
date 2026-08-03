@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings, Clock } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 
 const API_URL = 'http://localhost:5000/api/listings';
-const USER_ID = 'user_123'; // Hardcoded for MVP
+const USER_API_URL = 'http://localhost:5000/api/users';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
   const [listings, setListings] = useState([]);
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingListing, setEditingListing] = useState(null);
@@ -20,13 +24,21 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    fetchListings();
-  }, []);
+    if (!userId) {
+      navigate('/signin');
+      return;
+    }
+    fetchData();
+  }, [userId, navigate]);
 
-  const fetchListings = async () => {
+  const fetchData = async () => {
     try {
-      const res = await axios.get(`${API_URL}?userId=${USER_ID}`);
-      setListings(res.data);
+      const [listingsRes, userRes] = await Promise.all([
+        axios.get(`${API_URL}?userId=${userId}`),
+        axios.get(`${USER_API_URL}/${userId}`)
+      ]);
+      setListings(listingsRes.data);
+      setUserData(userRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -74,7 +86,7 @@ export default function Dashboard() {
         const res = await axios.put(`${API_URL}/${editingListing._id}`, formData);
         setListings(listings.map(l => l._id === editingListing._id ? res.data : l));
       } else {
-        const res = await axios.post(API_URL, { ...formData, userId: USER_ID });
+        const res = await axios.post(API_URL, { ...formData, userId });
         setListings([...listings, res.data]);
       }
       setIsModalOpen(false);
@@ -84,10 +96,19 @@ export default function Dashboard() {
     }
   };
 
+  const calculateCompleteness = () => {
+    if (!userData) return 0;
+    const fields = [userData.fullName, userData.username, userData.jobTitle, userData.tagline, userData.location, userData.bio];
+    const filled = fields.filter(field => field && field.trim().length > 0).length;
+    return Math.round((filled / fields.length) * 100);
+  };
+
   const teachListings = listings.filter(l => l.type === 'teach');
   const learnListings = listings.filter(l => l.type === 'learn');
 
   if (loading) return <div className="p-8 text-center text-slate-500">Loading...</div>;
+
+  const completeness = calculateCompleteness();
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -95,27 +116,36 @@ export default function Dashboard() {
       {/* LEFT SIDEBAR */}
       <div className="w-full lg:w-72 shrink-0 space-y-6">
         {/* Profile Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative group cursor-pointer" onClick={() => navigate('/settings')}>
+          <div className="absolute inset-0 bg-black/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <span className="bg-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm text-slate-700 flex items-center gap-2"><Edit2 size={14}/> Edit Profile</span>
+          </div>
           <div className="h-24 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
           <div className="px-6 pb-6 relative">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white absolute -top-10 shadow-sm bg-white">
-              <img src="https://i.pravatar.cc/150?img=47" alt="Profile" className="w-full h-full object-cover" />
+            <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white absolute -top-10 shadow-sm bg-white flex items-center justify-center text-slate-300 bg-slate-50">
+              {userData?.profilePicture ? (
+                <img src={userData.profilePicture} alt="Profile" className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = ''; }} />
+              ) : (
+                <User size={40} />
+              )}
             </div>
             <div className="pt-14">
-              <h2 className="text-xl font-bold text-slate-900">Maya Chen</h2>
-              <p className="text-sm text-slate-500 mt-1">Product designer • Curious maker</p>
+              <h2 className="text-xl font-bold text-slate-900">{userData?.fullName || 'Anonymous User'}</h2>
+              <p className="text-sm text-slate-500 mt-1">
+                {userData?.jobTitle || 'No title set'} {userData?.tagline ? `• ${userData.tagline}` : ''}
+              </p>
               <div className="flex items-center gap-1 text-sm text-slate-500 mt-3">
-                <MapPin size={14} /> Brooklyn, New York
+                <MapPin size={14} /> {userData?.location || 'No location set'}
               </div>
             </div>
             
             <div className="mt-6 pt-6 border-t border-slate-100">
               <div className="flex justify-between text-xs font-semibold mb-2">
                 <span className="text-blue-600">Profile completeness</span>
-                <span className="text-blue-600">82%</span>
+                <span className="text-blue-600">{completeness}%</span>
               </div>
               <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '82%' }}></div>
+                <div className={`h-full rounded-full ${completeness === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${completeness}%` }}></div>
               </div>
             </div>
           </div>
@@ -132,9 +162,9 @@ export default function Dashboard() {
           <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white rounded-xl font-medium transition-colors">
             <Users size={20} /> My exchanges
           </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white rounded-xl font-medium transition-colors">
-            <Settings size={20} /> Settings
-          </a>
+          <Link to="/settings" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white rounded-xl font-medium transition-colors">
+            <SettingsIcon size={20} /> Settings
+          </Link>
         </nav>
       </div>
 
