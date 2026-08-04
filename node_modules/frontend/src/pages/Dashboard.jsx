@@ -3,8 +3,9 @@ import axios from 'axios';
 import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User, BadgeCheck } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
-const API_URL = 'http://localhost:5000/api/listings';
-const USER_API_URL = 'http://localhost:5000/api/users';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = `${BASE_URL}/api/listings`;
+const USER_API_URL = `${BASE_URL}/api/users`;
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ export default function Dashboard() {
       const [listingsRes, userRes, sessionsRes] = await Promise.all([
         axios.get(`${API_URL}?userId=${userId}`),
         axios.get(`${USER_API_URL}/${userId}`),
-        axios.get(`http://localhost:5000/api/endorsements/sessions?userId=${userId}`)
+        axios.get(`${BASE_URL}/api/endorsements/sessions?userId=${userId}`)
       ]);
       setListings(listingsRes.data);
       setUserData(userRes.data);
@@ -112,7 +113,7 @@ export default function Dashboard() {
     setSubmittingEndorsement(true);
     try {
       const session = sessions.find((item) => item.sessionId === selectedSession);
-      await axios.post('http://localhost:5000/api/endorsements', {
+      await axios.post(`${BASE_URL}/api/endorsements`, {
         fromUserId: userId,
         toUserId: session.partnerUserId,
         sessionId: selectedSession,
