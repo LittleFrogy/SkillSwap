@@ -218,6 +218,54 @@ export default function Dashboard() {
           </button>
         </div>
 
+        {/* Teach Section */}
+        <div className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm">
+                <GraduationCap size={22} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Skills I can teach</h2>
+                <p className="text-sm text-slate-500">Give someone a shortcut to what you know.</p>
+              </div>
+            </div>
+            <button onClick={() => openModal('teach')} className="text-blue-600 text-sm font-semibold hover:text-blue-700 flex items-center gap-1">
+              <Plus size={16} /> Add skill
+            </button>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {teachListings.map(l => (
+              <ListingCard key={l._id} listing={l} onEdit={() => openModal('teach', l)} onDelete={() => handleDelete(l._id)} iconColor="blue" />
+            ))}
+          </div>
+        </div>
+
+        {/* Learn Section */}
+        <div className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm">
+                <BookOpen size={22} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Skills I want to learn</h2>
+                <p className="text-sm text-slate-500">Let the right teacher find you.</p>
+              </div>
+            </div>
+            <button onClick={() => openModal('learn')} className="text-emerald-600 text-sm font-semibold hover:text-emerald-700 flex items-center gap-1">
+              <Plus size={16} /> Add skill
+            </button>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {learnListings.map(l => (
+              <ListingCard key={l._id} listing={l} onEdit={() => openModal('learn', l)} onDelete={() => handleDelete(l._id)} iconColor="emerald" />
+            ))}
+          </div>
+        </div>
+
         <div className="mb-10 bg-white/95 backdrop-blur rounded-[28px] border border-white/70 p-6 shadow-[0_25px_60px_-24px_rgba(15,23,42,0.3)]">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-sm">
