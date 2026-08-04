@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const Message = require("../models/Message");
 
 const router = express.Router();
@@ -6,17 +7,26 @@ const router = express.Router();
 // Create a message
 router.post("/", async (request, response) => {
   try {
-    const { sender, receiver, text } = request.body;
+    const { senderId, receiverId, text } = request.body;
 
-    if (!sender || !receiver || !text?.trim()) {
+    if (!senderId || !receiverId || !text?.trim()) {
       return response.status(400).json({
-        message: "Sender, receiver, and text are required.",
+        message: "Sender ID, receiver ID, and text are required.",
+      });
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(senderId) ||
+      !mongoose.Types.ObjectId.isValid(receiverId)
+    ) {
+      return response.status(400).json({
+        message: "Invalid sender or receiver ID.",
       });
     }
 
     const newMessage = await Message.create({
-      sender,
-      receiver,
+      senderId,
+      receiverId,
       text: text.trim(),
     });
 
@@ -29,13 +39,31 @@ router.post("/", async (request, response) => {
   }
 });
 
-// Read messages for one conversation
-router.get("/:receiver", async (request, response) => {
+// Read messages between two users
+router.get("/conversation/:userId/:otherUserId", async (request, response) => {
   try {
-    const receiverName = request.params.receiver;
+    const { userId, otherUserId } = request.params;
+
+    if (
+      !mongoose.Types.ObjectId.isValid(userId) ||
+      !mongoose.Types.ObjectId.isValid(otherUserId)
+    ) {
+      return response.status(400).json({
+        message: "Invalid user ID.",
+      });
+    }
 
     const savedMessages = await Message.find({
-      receiver: receiverName,
+      $or: [
+        {
+          senderId: userId,
+          receiverId: otherUserId,
+        },
+        {
+          senderId: otherUserId,
+          receiverId: userId,
+        },
+      ],
     }).sort({ createdAt: 1 });
 
     response.json(savedMessages);
@@ -50,30 +78,32 @@ router.get("/:receiver", async (request, response) => {
 // Update a message
 router.put("/:id", async (request, response) => {
   try {
-    const { text } = request.body;
+    const { text, currentUserId } = request.body;
 
-    if (!text?.trim()) {
+    if (!text?.trim() || !currentUserId) {
       return response.status(400).json({
-        message: "Message text is required.",
+        message: "Message text and current user ID are required.",
       });
     }
 
-    const updatedMessage = await Message.findByIdAndUpdate(
-      request.params.id,
-      { text: text.trim() },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const message = await Message.findById(request.params.id);
 
-    if (!updatedMessage) {
+    if (!message) {
       return response.status(404).json({
         message: "Message not found.",
       });
     }
 
-    response.json(updatedMessage);
+    if (message.senderId.toString() !== currentUserId) {
+      return response.status(403).json({
+        message: "You can only edit your own messages.",
+      });
+    }
+
+    message.text = text.trim();
+    await message.save();
+
+    response.json(message);
   } catch (error) {
     response.status(500).json({
       message: "Failed to update message.",
@@ -85,19 +115,32 @@ router.put("/:id", async (request, response) => {
 // Delete a message
 router.delete("/:id", async (request, response) => {
   try {
-    const deletedMessage = await Message.findByIdAndDelete(
-      request.params.id
-    );
+    const { currentUserId } = request.body;
 
-    if (!deletedMessage) {
+    if (!currentUserId) {
+      return response.status(400).json({
+        message: "Current user ID is required.",
+      });
+    }
+
+    const message = await Message.findById(request.params.id);
+
+    if (!message) {
       return response.status(404).json({
         message: "Message not found.",
       });
     }
 
+    if (message.senderId.toString() !== currentUserId) {
+      return response.status(403).json({
+        message: "You can only delete your own messages.",
+      });
+    }
+
+    await Message.findByIdAndDelete(request.params.id);
+
     response.json({
       message: "Message deleted successfully.",
-      deletedMessage,
     });
   } catch (error) {
     response.status(500).json({
