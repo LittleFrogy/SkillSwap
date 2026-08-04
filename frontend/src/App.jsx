@@ -8,6 +8,7 @@ import Signin from './pages/Signin';
 import Settings from './pages/Settings';
 import Endorsements from './pages/Endorsements';
 import Inbox from './pages/Inbox';
+import Community from './pages/Community';
 import { Bell, User } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -52,10 +53,14 @@ function Navbar() {
         
         <div className="flex h-full gap-8">
           <Link
-            to="#"
-            className="py-5 font-medium text-slate-500 hover:text-slate-900"
+            to="/community"
+            className={`border-b-2 py-5 font-medium ${
+              isActive("/community")
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
           >
-            Discover
+            Community
           </Link>
 
           <Link
@@ -147,6 +152,7 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/endorsements" element={<Endorsements />} />
             <Route path="/inbox" element={<Inbox />} />
+            <Route path="/community" element={<Community />} />
           </Routes>
         </main>
       </div>
