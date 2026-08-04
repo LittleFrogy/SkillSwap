@@ -1,8 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-const upload = require("../middleware/upload");
-
 const {
   getPosts,
   createPost,
@@ -12,6 +10,6 @@ const {
 router.get("/", getPosts);
 
 // Create a post with optional image upload
-router.post("/", upload.single("image"), createPost);
+router.post("/", createPost);
 
 module.exports = router;

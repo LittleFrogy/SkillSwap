@@ -15,14 +15,11 @@ exports.getPosts = async (req, res) => {
 // Create a new post
 exports.createPost = async (req, res) => {
   try {
-    const { content } = req.body;
-
-    // Image uploaded by Multer
-    const image = req.file ? `uploads/${req.file.filename}` : "";
+    const { content, image } = req.body;
 
     const newPost = new Post({
       content,
-      image,
+      image: image || "",
     });
 
     const savedPost = await newPost.save();
