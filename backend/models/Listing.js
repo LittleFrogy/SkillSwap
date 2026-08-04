@@ -30,6 +30,10 @@ const listingSchema = new mongoose.Schema({
     weeklyAvailability: {
         type: String,
         required: true
+    },
+    endorsements: {
+        type: [Object],
+        default: []
     }
 }, { timestamps: true });
 
