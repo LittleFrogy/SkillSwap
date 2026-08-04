@@ -2,9 +2,25 @@ import { useState } from "react";
 import axios from "axios";
 import { BiImageAdd } from "react-icons/bi";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export default function CreatePostBox({ onPostCreated }) {
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
+
+  // Helper function to convert file to Base64 string
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+      fileReader.readAsDataURL(file);
+      fileReader.onload = () => {
+        resolve(fileReader.result);
+      };
+      fileReader.onerror = (error) => {
+        reject(error);
+      };
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -12,20 +28,16 @@ export default function CreatePostBox({ onPostCreated }) {
     if (!content.trim() && !image) return;
 
     try {
-      const formData = new FormData();
-      formData.append("content", content);
-
+      let base64Image = "";
       if (image) {
-        formData.append("image", image);
+        base64Image = await convertToBase64(image);
       }
 
       await axios.post(
-        "http://localhost:5001/api/posts",
-        formData,
+        `${API_URL}/api/posts`,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          content,
+          image: base64Image
         }
       );
 
