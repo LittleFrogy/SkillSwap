@@ -43,6 +43,35 @@ const getUserName = (userId) => {
 router.get('/sessions', async (req, res) => {
   try {
     const userId = req.query.userId || 'demo-user';
+
+    // Dynamically inject mock sessions for this specific user if none exist
+    const hasSessions = mockSessions.some(session => 
+      session.participants.some(p => p.userId === userId)
+    );
+
+    if (!hasSessions) {
+      mockSessions.push({
+        _id: `mock_session_a_${userId}`,
+        status: 'completed',
+        skill: 'React Development',
+        completedAt: new Date().toISOString(),
+        participants: [
+          { userId: userId, name: 'You' },
+          { userId: 'demo_partner_1', name: 'Rebecca Hughes' }
+        ]
+      });
+      mockSessions.push({
+        _id: `mock_session_b_${userId}`,
+        status: 'completed',
+        skill: 'UI/UX Design',
+        completedAt: new Date().toISOString(),
+        participants: [
+          { userId: userId, name: 'You' },
+          { userId: 'demo_partner_2', name: 'Alex Rivera' }
+        ]
+      });
+    }
+
     const sessions = mockSessions
       .filter((session) => session.participants.some((participant) => participant.userId === userId))
       .map((session) => {
@@ -68,7 +97,24 @@ router.get('/', async (req, res) => {
   try {
     const userId = req.query.userId || 'demo-user';
     if (isConnected()) {
-      const endorsements = await Endorsement.find({ toUserId: userId }).sort({ createdAt: -1 });
+      let endorsements = await Endorsement.find({ toUserId: userId }).sort({ createdAt: -1 });
+      
+      // Inject a mock received endorsement for demo purposes if they have none
+      if (endorsements.length === 0) {
+        const mockEndorsement = new Endorsement({
+          fromUserId: 'demo_mentor_99',
+          fromUserName: 'Sarah Jenkins',
+          toUserId: userId,
+          toUserName: 'You',
+          sessionId: 'demo_session_99',
+          skill: 'Python Programming',
+          comment: 'Incredible mentor! Explained complex concepts very clearly. Highly recommend.',
+          visible: true
+        });
+        await mockEndorsement.save();
+        endorsements = [mockEndorsement];
+      }
+
       res.json(endorsements.map((item) => summarizeEndorsement(item)));
     } else {
       const endorsements = mockEndorsements.filter((item) => item.toUserId === userId).map((item) => summarizeEndorsement(item));
