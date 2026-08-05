@@ -21,7 +21,7 @@
   }
 
   body {
-    @apply bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.18),_transparent_32%),radial-gradient(circle_at_top_right,_rgba(16,185,129,0.16),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#f3f7fc_55%,_#eef4fb_100%)] text-[#0f172a] min-h-screen;
+    @apply bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.18),_transparent_32%),radial-gradient(circle_at_top_right,_rgba(16,185,129,0.16),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#f3f7fc_55%,_#eef4fb_100%)] text-[#0f172a] min-h-screen overflow-x-hidden;
   }
 
   * {

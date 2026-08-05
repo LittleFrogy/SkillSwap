@@ -141,7 +141,7 @@ function App() {
       <div className="min-h-screen bg-[#f9fafb] font-sans text-[#000000e6]">
         <Navbar />
 
-        <main className="mx-auto max-w-[1200px] px-6 py-8">
+        <main className="mx-auto max-w-[1200px] w-full px-4 md:px-6 py-8 overflow-x-hidden">
           <Routes>
             <Route
               path="/"
