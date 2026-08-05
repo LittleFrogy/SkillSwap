@@ -44,8 +44,8 @@ router.get('/sessions', async (req, res) => {
   try {
     const userId = req.query.userId || 'demo-user';
 
-    // Dynamically inject mock sessions for this specific user if none exist
-    const hasSessions = mockSessions.some(session => 
+    // Dynamically inject mock sessions for this specific user if none exist,will modify this part after implementing the session part
+    const hasSessions = mockSessions.some(session =>
       session.participants.some(p => p.userId === userId)
     );
 
@@ -57,7 +57,7 @@ router.get('/sessions', async (req, res) => {
         completedAt: new Date().toISOString(),
         participants: [
           { userId: userId, name: 'You' },
-          { userId: 'demo_partner_1', name: 'Rebecca Hughes' }
+          { userId: 'demo_partner_1', name: 'saimun' }
         ]
       });
       mockSessions.push({
@@ -67,7 +67,7 @@ router.get('/sessions', async (req, res) => {
         completedAt: new Date().toISOString(),
         participants: [
           { userId: userId, name: 'You' },
-          { userId: 'demo_partner_2', name: 'Alex Rivera' }
+          { userId: 'demo_partner_2', name: 'tazbid' }
         ]
       });
     }
@@ -98,12 +98,12 @@ router.get('/', async (req, res) => {
     const userId = req.query.userId || 'demo-user';
     if (isConnected()) {
       let endorsements = await Endorsement.find({ toUserId: userId }).sort({ createdAt: -1 });
-      
-      // Inject a mock received endorsement for demo purposes if they have none
+
+      // Inject a mock received endorsement for demo purposes if they have none, will modify this part after implementing the session part
       if (endorsements.length === 0) {
         const mockEndorsement = new Endorsement({
           fromUserId: 'demo_mentor_99',
-          fromUserName: 'Sarah Jenkins',
+          fromUserName: 'Shahti',
           toUserId: userId,
           toUserName: 'You',
           sessionId: 'demo_session_99',
