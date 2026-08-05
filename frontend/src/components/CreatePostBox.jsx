@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { BiImageAdd } from "react-icons/bi";
 
@@ -7,6 +7,20 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 export default function CreatePostBox({ onPostCreated }) {
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/users/${userId}`);
+        setUserData(res.data);
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    };
+    fetchUser();
+  }, [userId]);
 
   // Helper function to convert file to Base64 string
   const convertToBase64 = (file) => {
@@ -37,7 +51,9 @@ export default function CreatePostBox({ onPostCreated }) {
         `${API_URL}/api/posts`,
         {
           content,
-          image: base64Image
+          image: base64Image,
+          authorName: userData?.fullName || "Anonymous User",
+          authorRole: userData?.jobTitle || "SkillSwap Member"
         }
       );
 

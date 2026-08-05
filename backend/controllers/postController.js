@@ -15,11 +15,13 @@ exports.getPosts = async (req, res) => {
 // Create a new post
 exports.createPost = async (req, res) => {
   try {
-    const { content, image } = req.body;
+    const { content, image, authorName, authorRole } = req.body;
 
     const newPost = new Post({
       content,
       image: image || "",
+      authorName: authorName || "Anonymous User",
+      authorRole: authorRole || "SkillSwap Member"
     });
 
     const savedPost = await newPost.save();
