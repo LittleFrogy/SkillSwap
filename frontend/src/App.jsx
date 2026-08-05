@@ -41,64 +41,66 @@ function Navbar() {
 
   return (
     <nav className="sticky top-0 z-40 flex flex-wrap items-center justify-between border-b border-slate-200 bg-white px-4 md:px-8 py-2 md:py-0">
-      <div className="flex items-center gap-10">
-        <Link to="/" className="flex items-center gap-2 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white">
-            S
-          </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">
-            SkillSwap
-          </span>
+      
+      {/* 1. Logo (Left) */}
+      <Link to="/" className="flex items-center gap-2 py-2 md:py-4 order-1">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white">
+          S
+        </div>
+        <span className="text-xl font-bold tracking-tight text-slate-900">
+          SkillSwap
+        </span>
+      </Link>
+      
+      {/* 2. Navigation Links (Bottom on mobile, Middle on desktop) */}
+      <div className="flex w-full md:w-auto overflow-x-auto gap-5 md:gap-8 order-3 md:order-2 pb-2 md:pb-0 scrollbar-hide text-sm md:text-base">
+        <Link
+          to="/community"
+          className={`border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
+            isActive("/community")
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          Community
+        </Link>
+
+        <Link
+          to="/dashboard"
+          className={`border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
+            isActive("/dashboard")
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          My skills
+        </Link>
+
+        <Link
+          to="/inbox"
+          className={`border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
+            isActive("/inbox")
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          Inbox
         </Link>
         
-        <div className="flex w-full md:w-auto overflow-x-auto gap-4 md:gap-8 order-last md:order-none pb-1 md:pb-0">
-          <Link
-            to="/community"
-            className={`border-b-2 py-5 font-medium ${
-              isActive("/community")
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            Community
-          </Link>
-
-          <Link
-            to="/dashboard"
-            className={`border-b-2 py-5 font-medium ${
-              isActive("/dashboard")
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            My skills
-          </Link>
-
-          <Link
-            to="/inbox"
-            className={`border-b-2 py-5 font-medium ${
-              isActive("/inbox")
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            Inbox
-          </Link>
-          
-          <Link
-            to="/endorsements"
-            className={`border-b-2 py-5 font-medium ${
-              isActive("/endorsements")
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            Endorsements
-          </Link>
-        </div>
+        <Link
+          to="/endorsements"
+          className={`border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
+            isActive("/endorsements")
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          Endorsements
+        </Link>
       </div>
 
-      <div className="flex items-center gap-6">
+      {/* 3. Profile & Actions (Right) */}
+      <div className="flex items-center gap-4 md:gap-6 order-2 md:order-3">
         <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
           1,240 skills shared
@@ -113,7 +115,7 @@ function Navbar() {
 
         <Link
           to="/settings"
-          className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-slate-400 transition-all hover:ring-2 hover:ring-blue-500"
+          className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-slate-400 transition-all hover:ring-2 hover:ring-blue-500 shrink-0"
         >
           {profilePicture ? (
             <img
