@@ -40,7 +40,7 @@ function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-40 flex items-center justify-between border-b border-slate-200 bg-white px-8 py-0">
+    <nav className="sticky top-0 z-40 flex flex-wrap items-center justify-between border-b border-slate-200 bg-white px-4 md:px-8 py-2 md:py-0">
       <div className="flex items-center gap-10">
         <Link to="/" className="flex items-center gap-2 py-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white">
@@ -51,7 +51,7 @@ function Navbar() {
           </span>
         </Link>
         
-        <div className="flex h-full gap-8">
+        <div className="flex w-full md:w-auto overflow-x-auto gap-4 md:gap-8 order-last md:order-none pb-1 md:pb-0">
           <Link
             to="/community"
             className={`border-b-2 py-5 font-medium ${
@@ -99,7 +99,7 @@ function Navbar() {
       </div>
 
       <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600">
+        <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
           1,240 skills shared
         </div>
