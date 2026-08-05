@@ -35,7 +35,7 @@ export default function PostCard({ post }) {
       {/* Uploaded Image */}
       {post.image && (
         <img
-          src={`http://localhost:5001/${post.image}`}
+          src={post.image}
           alt="Post"
           className="rounded-xl mt-4 w-full max-h-125 object-cover"
         />
