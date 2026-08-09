@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User, BadgeCheck } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const API_URL = `${BASE_URL}/api/listings`;
-const USER_API_URL = `${BASE_URL}/api/users`;
+const API_URL = 'http://localhost:5000/api/listings';
+const USER_API_URL = 'http://localhost:5000/api/users';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
   const [listings, setListings] = useState([]);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingListing, setEditingListing] = useState(null);
-  const [sessions, setSessions] = useState([]);
-  const [selectedSession, setSelectedSession] = useState('');
-  const [endorsementForm, setEndorsementForm] = useState({ skill: '', comment: '' });
-  const [submittingEndorsement, setSubmittingEndorsement] = useState(false);
   
   const [formData, setFormData] = useState({
     type: 'teach',
@@ -29,26 +24,21 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    if (!localStorage.getItem('userId') && !sessionStorage.getItem('userId')) {
-      localStorage.setItem('userId', 'demo-user');
+    if (!userId) {
+      navigate('/signin');
+      return;
     }
     fetchData();
   }, [userId, navigate]);
 
   const fetchData = async () => {
     try {
-      const [listingsRes, userRes, sessionsRes] = await Promise.all([
+      const [listingsRes, userRes] = await Promise.all([
         axios.get(`${API_URL}?userId=${userId}`),
-        axios.get(`${USER_API_URL}/${userId}`),
-        axios.get(`${BASE_URL}/api/endorsements/sessions?userId=${userId}`)
+        axios.get(`${USER_API_URL}/${userId}`)
       ]);
       setListings(listingsRes.data);
       setUserData(userRes.data);
-      setSessions(sessionsRes.data);
-      if (sessionsRes.data[0]) {
-        setSelectedSession(sessionsRes.data[0].sessionId);
-        setEndorsementForm((current) => ({ ...current, skill: sessionsRes.data[0].skill }));
-      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -106,30 +96,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleEndorsementSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedSession || !endorsementForm.skill || !endorsementForm.comment) return;
-
-    setSubmittingEndorsement(true);
-    try {
-      const session = sessions.find((item) => item.sessionId === selectedSession);
-      await axios.post(`${BASE_URL}/api/endorsements`, {
-        fromUserId: userId,
-        toUserId: session.partnerUserId,
-        sessionId: selectedSession,
-        skill: endorsementForm.skill,
-        comment: endorsementForm.comment
-      });
-      alert('Endorsement submitted successfully.');
-      setEndorsementForm({ skill: '', comment: '' });
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || 'Unable to submit endorsement.');
-    } finally {
-      setSubmittingEndorsement(false);
-    }
-  };
-
   const calculateCompleteness = () => {
     if (!userData) return 0;
     const fields = [userData.fullName, userData.username, userData.jobTitle, userData.tagline, userData.location, userData.bio];
@@ -150,15 +116,13 @@ export default function Dashboard() {
       {/* LEFT SIDEBAR */}
       <div className="w-full lg:w-72 shrink-0 space-y-6">
         {/* Profile Card */}
-        <div className="bg-white/95 backdrop-blur rounded-[28px] shadow-[0_25px_60px_-24px_rgba(15,23,42,0.35)] border border-white/70 overflow-hidden relative group cursor-pointer" onClick={() => navigate('/settings')}>
-          <div className="absolute inset-0 bg-slate-900/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative group cursor-pointer" onClick={() => navigate('/settings')}>
+          <div className="absolute inset-0 bg-black/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
             <span className="bg-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm text-slate-700 flex items-center gap-2"><Edit2 size={14}/> Edit Profile</span>
           </div>
-          <div className="h-28 bg-[linear-gradient(120deg,_#0f172a_0%,_#1d4ed8_40%,_#38bdf8_100%)] relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.28),_transparent_35%)]"></div>
-          </div>
+          <div className="h-24 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
           <div className="px-6 pb-6 relative">
-            <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-white absolute -top-12 shadow-lg bg-white flex items-center justify-center text-slate-300 bg-slate-50">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white absolute -top-10 shadow-sm bg-white flex items-center justify-center text-slate-300 bg-slate-50">
               {userData?.profilePicture ? (
                 <img src={userData.profilePicture} alt="Profile" className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = ''; }} />
               ) : (
@@ -177,22 +141,28 @@ export default function Dashboard() {
             
             <div className="mt-6 pt-6 border-t border-slate-100">
               <div className="flex justify-between text-xs font-semibold mb-2">
-                <span className="text-slate-600">Profile completeness</span>
+                <span className="text-blue-600">Profile completeness</span>
                 <span className="text-blue-600">{completeness}%</span>
               </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className={`h-full rounded-full ${completeness === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-blue-500 to-cyan-500'}`} style={{ width: `${completeness}%` }}></div>
+              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full ${completeness === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${completeness}%` }}></div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Sidebar Nav */}
-        <nav className="space-y-2">
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/80 hover:shadow-sm rounded-2xl font-medium transition-all">
-            <BookMarked size={20} /> Endorse partner
+        <nav className="space-y-1">
+          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white rounded-xl font-medium transition-colors">
+            <Grid size={20} /> Smart matches
           </a>
-          <Link to="/settings" className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/80 hover:shadow-sm rounded-2xl font-medium transition-all">
+          <a href="#" className="flex items-center gap-3 px-4 py-3 bg-white text-blue-600 rounded-xl shadow-sm border border-slate-100 font-medium">
+            <BookMarked size={20} /> My skill library
+          </a>
+          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white rounded-xl font-medium transition-colors">
+            <Users size={20} /> My exchanges
+          </a>
+          <Link to="/settings" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white rounded-xl font-medium transition-colors">
             <SettingsIcon size={20} /> Settings
           </Link>
         </nav>
@@ -212,7 +182,7 @@ export default function Dashboard() {
           </div>
           <button 
             onClick={() => openModal('teach')}
-            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full font-semibold hover:opacity-95 flex items-center gap-2 shadow-[0_12px_30px_-12px_rgba(37,99,235,0.7)]"
+            className="px-6 py-2.5 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 flex items-center gap-2 shadow-sm"
           >
             <Plus size={18} /> Add a skill
           </button>
@@ -243,7 +213,7 @@ export default function Dashboard() {
         </div>
 
         {/* Learn Section */}
-        <div className="mb-12">
+        <div>
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm">
@@ -264,46 +234,6 @@ export default function Dashboard() {
               <ListingCard key={l._id} listing={l} onEdit={() => openModal('learn', l)} onDelete={() => handleDelete(l._id)} iconColor="emerald" />
             ))}
           </div>
-        </div>
-
-        <div className="mb-10 bg-white/95 backdrop-blur rounded-[28px] border border-white/70 p-6 shadow-[0_25px_60px_-24px_rgba(15,23,42,0.3)]">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-sm">
-              <BadgeCheck size={20} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">Endorse completed sessions</h2>
-              <p className="text-sm text-slate-500">Share public trust signals only after a real session is completed.</p>
-            </div>
-          </div>
-
-          <form onSubmit={handleEndorsementSubmit} className="space-y-3">
-            <div className="grid md:grid-cols-[1.2fr_1fr_auto] gap-3 items-end">
-              <div>
-                <label className="block text-sm font-semibold text-slate-800 mb-2">Completed session</label>
-                <select value={selectedSession} onChange={(e) => {
-                  const session = sessions.find((item) => item.sessionId === e.target.value);
-                  setSelectedSession(e.target.value);
-                  setEndorsementForm((current) => ({ ...current, skill: session ? session.skill : '' }));
-                }} className="w-full p-3 rounded-2xl border border-slate-200 bg-white/90 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900">
-                  {sessions.map((session) => (
-                    <option key={session.sessionId} value={session.sessionId}>{session.partnerName} • {session.skill}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-800 mb-2">Skill</label>
-                <input required type="text" className="w-full p-3 rounded-2xl border border-slate-200 bg-white/90 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900" value={endorsementForm.skill} onChange={(e) => setEndorsementForm({ ...endorsementForm, skill: e.target.value })} />
-              </div>
-              <button type="submit" disabled={submittingEndorsement} className="px-5 py-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:opacity-90 disabled:opacity-70 shadow-sm">
-                {submittingEndorsement ? 'Submitting...' : 'Submit endorsement'}
-              </button>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-800 mb-2">Comment</label>
-              <input required type="text" className="w-full p-3 rounded-2xl border border-slate-200 bg-white/90 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900" value={endorsementForm.comment} onChange={(e) => setEndorsementForm({ ...endorsementForm, comment: e.target.value })} />
-            </div>
-          </form>
         </div>
 
       </div>

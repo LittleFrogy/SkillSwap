@@ -6,126 +6,53 @@ import Dashboard from './pages/Dashboard';
 import Signup from './pages/Signup';
 import Signin from './pages/Signin';
 import Settings from './pages/Settings';
-import Endorsements from './pages/Endorsements';
-import Inbox from './pages/Inbox';
-import Community from './pages/Community';
 import { Bell, User } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function Navbar() {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
-  const userId = localStorage.getItem("userId") || sessionStorage.getItem("userId");
-  const [profilePicture, setProfilePicture] = useState("");
-
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+  const [profilePicture, setProfilePicture] = useState('');
+  
   useEffect(() => {
-    if (!userId) {
-      setProfilePicture("");
-      return;
+    if (userId) {
+      axios.get(`http://localhost:5000/api/users/${userId}`)
+        .then(res => setProfilePicture(res.data.profilePicture))
+        .catch(err => console.error(err));
     }
+  }, [userId, location.pathname]); // Re-fetch on navigation (e.g. returning from settings)
 
-    axios
-      .get(`${API_URL}/api/users/${userId}`)
-      .then((response) => {
-        setProfilePicture(response.data.profilePicture || "");
-      })
-      .catch((error) => {
-        console.error("Failed to load profile picture:", error);
-      });
-  }, [userId, location.pathname]);
-
-  if (["/signup", "/signin"].includes(location.pathname)) {
+  // Hide navbar on auth pages
+  if (['/signup', '/signin'].includes(location.pathname)) {
     return null;
   }
 
   return (
-    <nav className="sticky top-0 z-40 flex flex-wrap items-center justify-between border-b border-slate-200 bg-white px-4 md:px-8 py-2 md:py-0">
-      
-      {/* 1. Logo (Left) */}
-      <Link to="/" className="flex items-center gap-2 py-2 md:py-4 order-1">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white">
-          S
-        </div>
-        <span className="text-xl font-bold tracking-tight text-slate-900">
-          SkillSwap
-        </span>
-      </Link>
-      
-      {/* 2. Navigation Links (Bottom on mobile, Middle on desktop) */}
-      <div className="flex w-full md:w-auto overflow-x-auto gap-5 md:gap-8 order-3 md:order-2 pb-2 md:pb-0 scrollbar-hide text-sm md:text-base">
-        <Link
-          to="/community"
-          className={`border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
-            isActive("/community")
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-slate-500 hover:text-slate-900"
-          }`}
-        >
-          Community
-        </Link>
-
-        <Link
-          to="/dashboard"
-          className={`border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
-            isActive("/dashboard")
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-slate-500 hover:text-slate-900"
-          }`}
-        >
-          My skills
-        </Link>
-
-        <Link
-          to="/inbox"
-          className={`border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
-            isActive("/inbox")
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-slate-500 hover:text-slate-900"
-          }`}
-        >
-          Inbox
+    <nav className="bg-white border-b border-slate-200 px-8 py-0 flex items-center justify-between sticky top-0 z-40">
+      <div className="flex items-center gap-10">
+        <Link to="/" className="flex items-center gap-2 py-4">
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">S</div>
+          <span className="font-bold text-xl text-slate-900 tracking-tight">SkillSwap</span>
         </Link>
         
-        <Link
-          to="/endorsements"
-          className={`border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
-            isActive("/endorsements")
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-slate-500 hover:text-slate-900"
-          }`}
-        >
-          Endorsements
-        </Link>
+        <div className="flex gap-8 h-full">
+          <Link to="#" className="text-slate-500 hover:text-slate-900 font-medium py-5">Discover</Link>
+          <Link to="/dashboard" className={`font-medium py-5 border-b-2 ${isActive('/dashboard') ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent hover:text-slate-900'}`}>My skills</Link>
+          <Link to="#" className="text-slate-500 hover:text-slate-900 font-medium py-5">Community</Link>
+        </div>
       </div>
 
-      {/* 3. Profile & Actions (Right) */}
-      <div className="flex items-center gap-4 md:gap-6 order-2 md:order-3">
-        <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 text-sm font-medium text-slate-600">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
           1,240 skills shared
         </div>
-
-        <button
-          type="button"
-          className="text-slate-500 hover:text-slate-700"
-        >
+        <button className="text-slate-500 hover:text-slate-700">
           <Bell size={20} />
         </button>
-
-        <Link
-          to="/settings"
-          className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-slate-400 transition-all hover:ring-2 hover:ring-blue-500 shrink-0"
-        >
+        <Link to="/settings" className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 cursor-pointer block hover:ring-2 hover:ring-blue-500 transition-all flex items-center justify-center bg-slate-100 text-slate-400">
           {profilePicture ? (
-            <img
-              src={profilePicture}
-              alt="Profile"
-              className="h-full w-full object-cover"
-              onError={() => {
-                setProfilePicture("");
-              }}
-            />
+            <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = ''; setProfilePicture(''); }} />
           ) : (
             <User size={18} />
           )}
@@ -140,21 +67,14 @@ function App() {
     <Router>
       <div className="min-h-screen bg-[#f9fafb] font-sans text-[#000000e6]">
         <Navbar />
-
-        <main className="mx-auto max-w-[1200px] w-full px-4 md:px-6 py-8 overflow-x-hidden">
+        <main className="max-w-[1200px] mx-auto py-8 px-6">
           <Routes>
-            <Route
-              path="/"
-              element={<Navigate to="/signup" replace />}
-            />
+            <Route path="/" element={<Navigate to="/signup" />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/signin" element={<Signin />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/endorsements" element={<Endorsements />} />
-            <Route path="/inbox" element={<Inbox />} />
-            <Route path="/community" element={<Community />} />
           </Routes>
         </main>
       </div>
