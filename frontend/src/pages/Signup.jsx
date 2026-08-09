@@ -3,8 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
 export default function Signup() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -55,7 +53,7 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/api/auth/signup`, {
+      const res = await axios.post('http://localhost:5000/api/auth/signup', {
         fullName: formData.fullName,
         username: formData.username,
         email: formData.email,
