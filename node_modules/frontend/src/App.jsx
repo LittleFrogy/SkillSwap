@@ -9,7 +9,8 @@ import Settings from './pages/Settings';
 import Endorsements from './pages/Endorsements';
 import Inbox from './pages/Inbox';
 import Community from './pages/Community';
-import { Bell, User } from 'lucide-react';
+import SmartMatches from './pages/SmartMatches';
+import { Bell, User, Sparkles } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -97,6 +98,17 @@ function Navbar() {
         >
           Endorsements
         </Link>
+        
+        <Link
+          to="/matches"
+          className={`flex items-center gap-1.5 border-b-2 py-2 md:py-5 font-bold whitespace-nowrap ${
+            isActive("/matches")
+              ? "border-purple-600 text-purple-600"
+              : "border-transparent text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          <Sparkles size={16} className={isActive("/matches") ? "text-purple-600" : "text-slate-400"} /> Matches
+        </Link>
       </div>
 
       {/* 3. Profile & Actions (Right) */}
@@ -155,6 +167,7 @@ function App() {
             <Route path="/endorsements" element={<Endorsements />} />
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/community" element={<Community />} />
+            <Route path="/matches" element={<SmartMatches />} />
           </Routes>
         </main>
       </div>
