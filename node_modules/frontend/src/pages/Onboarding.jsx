@@ -14,8 +14,17 @@ export default function Onboarding() {
     if (!userId) navigate('/signin');
   }, [userId, navigate]);
 
-  const emptyTeach = { skill: '', proficiencyLevel: 'Intermediate', description: '', weeklyAvailability: '' };
-  const emptyLearn = { skill: '', proficiencyLevel: 'Beginner', description: '', weeklyAvailability: '' };
+  const emptyTeach = { skill: '', proficiencyLevel: 'Intermediate', description: '', weeklyAvailability: '', days: [], times: [] };
+  const emptyLearn = { skill: '', proficiencyLevel: 'Beginner', description: '', weeklyAvailability: '', days: [], times: [] };
+
+  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const TIMES = ['Morning', 'Noon', 'Afternoon', 'Evening', 'Night'];
+
+  const toggleArrayItem = (array, item) => {
+    return array?.includes(item) 
+      ? array.filter(i => i !== item) 
+      : [...(array || []), item];
+  };
 
   const [teachList, setTeachList] = useState([{...emptyTeach}]);
   const [learnList, setLearnList] = useState([{...emptyLearn}]);
@@ -45,13 +54,20 @@ export default function Onboarding() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      const formatPayload = (item, type) => {
+        const derivedAvailability = item.days?.length > 0 || item.times?.length > 0 
+          ? `${item.days?.join(', ')} ${item.times?.length > 0 ? `(${item.times.join(', ')})` : ''}`
+          : 'Flexible';
+        return { ...item, type, userId, weeklyAvailability: derivedAvailability };
+      };
+
       const teachPromises = teachList
         .filter(t => t.skill.trim())
-        .map(t => axios.post(API_URL, { ...t, type: 'teach', userId }));
+        .map(t => axios.post(API_URL, formatPayload(t, 'teach')));
         
       const learnPromises = learnList
         .filter(l => l.skill.trim())
-        .map(l => axios.post(API_URL, { ...l, type: 'learn', userId }));
+        .map(l => axios.post(API_URL, formatPayload(l, 'learn')));
 
       await Promise.all([...teachPromises, ...learnPromises]);
       setStep(4);
@@ -139,15 +155,37 @@ export default function Onboarding() {
                         <option>Expert</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-800 mb-2">Weekly Availability</label>
-                      <input 
-                        type="text" 
-                        className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={data.weeklyAvailability}
-                        onChange={e => updateTeach(idx, 'weeklyAvailability', e.target.value)}
-                        placeholder="e.g. Weekends, Evenings"
-                      />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-800 mb-2">Weekly Availability (Days)</label>
+                    <div className="flex flex-wrap gap-2">
+                      {DAYS.map(day => (
+                        <button 
+                          key={day} 
+                          type="button" 
+                          onClick={() => updateTeach(idx, 'days', toggleArrayItem(data.days, day))}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${data.days?.includes(day) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'}`}
+                        >
+                          {day}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-800 mb-2">Timings</label>
+                    <div className="flex flex-wrap gap-2">
+                      {TIMES.map(time => (
+                        <button 
+                          key={time} 
+                          type="button" 
+                          onClick={() => updateTeach(idx, 'times', toggleArrayItem(data.times, time))}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${data.times?.includes(time) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'}`}
+                        >
+                          {time}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -226,15 +264,37 @@ export default function Onboarding() {
                         <option>Advanced</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-800 mb-2">Weekly Availability</label>
-                      <input 
-                        type="text" 
-                        className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={data.weeklyAvailability}
-                        onChange={e => updateLearn(idx, 'weeklyAvailability', e.target.value)}
-                        placeholder="e.g. Weekday mornings"
-                      />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-800 mb-2">Weekly Availability (Days)</label>
+                    <div className="flex flex-wrap gap-2">
+                      {DAYS.map(day => (
+                        <button 
+                          key={day} 
+                          type="button" 
+                          onClick={() => updateLearn(idx, 'days', toggleArrayItem(data.days, day))}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${data.days?.includes(day) ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-300 hover:border-emerald-400'}`}
+                        >
+                          {day}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-800 mb-2">Timings</label>
+                    <div className="flex flex-wrap gap-2">
+                      {TIMES.map(time => (
+                        <button 
+                          key={time} 
+                          type="button" 
+                          onClick={() => updateLearn(idx, 'times', toggleArrayItem(data.times, time))}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${data.times?.includes(time) ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-300 hover:border-emerald-400'}`}
+                        >
+                          {time}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
