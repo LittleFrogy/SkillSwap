@@ -74,14 +74,12 @@ router.get('/', async (req, res) => {
       // Cap score at 100
       score = Math.min(score, 100);
 
-      // Only push if there's SOME level of match (score > 0)
-      if (score > 0) {
-        matches.push({
-          userId: otherUser.userId,
-          compatibilityScore: score,
-          matchedSkills
-        });
-      }
+      // Push all users so they are visible by default in the community
+      matches.push({
+        userId: otherUser.userId,
+        compatibilityScore: score,
+        matchedSkills
+      });
     }
 
     // Sort by highest compatibility score first

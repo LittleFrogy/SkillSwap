@@ -13,7 +13,7 @@ export default function SmartMatches() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   // Filter States
-  const [filterScore, setFilterScore] = useState(50);
+  const [filterScore, setFilterScore] = useState(0);
   const [filterCategory, setFilterCategory] = useState('All categories');
   const [sortBy, setSortBy] = useState('Best match');
 
@@ -249,14 +249,14 @@ export default function SmartMatches() {
                   </div>
                   <input 
                     type="range" 
-                    min="10" 
+                    min="0" 
                     max="100" 
                     value={filterScore}
                     onChange={(e) => setFilterScore(Number(e.target.value))}
                     className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" 
                   />
                   <div className="flex justify-between text-xs text-slate-400 mt-1">
-                    <span>10%</span>
+                    <span>0%</span>
                     <span>100%</span>
                   </div>
                 </div>
@@ -264,7 +264,7 @@ export default function SmartMatches() {
                 <div className="pt-2">
                   <button 
                     onClick={() => {
-                      setFilterScore(50);
+                      setFilterScore(0);
                       setFilterCategory('All categories');
                       setSortBy('Best match');
                     }}
