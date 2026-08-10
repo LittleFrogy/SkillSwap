@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import ConversationItem from "../components/ConversationItem";
 
 const API_URL =
@@ -14,6 +15,7 @@ function Inbox() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [editingMessageId, setEditingMessageId] = useState(null);
+  const [searchParams] = useSearchParams();
 
   const messagesEndRef = useRef(null);
 
@@ -410,6 +412,16 @@ function Inbox() {
       behavior: "smooth",
     });
   }, [selectedMessages]);
+
+  useEffect(() => {
+    const chatWithId = searchParams.get("chatWith");
+    if (chatWithId && conversationList.length > 0 && !selectedConversation) {
+      const targetConvo = conversationList.find((c) => c.id === chatWithId);
+      if (targetConvo) {
+        handleSelectConversation(targetConvo);
+      }
+    }
+  }, [searchParams, conversationList]);
 
   if (!currentUserId) {
     return (
