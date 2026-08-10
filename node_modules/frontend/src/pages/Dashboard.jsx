@@ -188,12 +188,15 @@ export default function Dashboard() {
         </div>
 
         {/* Sidebar Nav */}
-        <nav className="space-y-2">
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/80 hover:shadow-sm rounded-2xl font-medium transition-all">
-            <BookMarked size={20} /> Endorse partner
-          </a>
-          <Link to="/settings" className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/80 hover:shadow-sm rounded-2xl font-medium transition-all">
-            <SettingsIcon size={20} /> Settings
+        <nav className="space-y-1">
+          <Link to="/matches" className="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-all">
+            <Grid size={18} /> Smart matches
+          </Link>
+          <Link to="/dashboard" className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold transition-all">
+            <BookMarked size={18} /> My skill library
+          </Link>
+          <Link to="/settings" className="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-all">
+            <SettingsIcon size={18} /> Settings
           </Link>
         </nav>
       </div>
