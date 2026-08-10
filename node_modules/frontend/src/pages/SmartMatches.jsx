@@ -1,29 +1,68 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Sparkles, MessageCircle, User, ArrowRightLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Sparkles, MessageCircle, User, ArrowRightLeft, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Filter, Search, MoreHorizontal, Clock } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function SmartMatches() {
   const [matches, setMatches] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchMatches = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/matches?userId=${userId}`);
-        setMatches(res.data);
+        const [matchesRes, userRes, requestsRes] = await Promise.all([
+          axios.get(`${API_URL}/api/matches?userId=${userId}`),
+          axios.get(`${API_URL}/api/users/${userId}`),
+          axios.get(`${API_URL}/api/matches/requests/pending?userId=${userId}`)
+        ]);
+        setMatches(matchesRes.data);
+        setUserData(userRes.data);
+        setRequests(requestsRes.data);
       } catch (err) {
-        console.error("Failed to fetch matches", err);
+        console.error("Failed to fetch data", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchMatches();
+    fetchData();
   }, [userId]);
+
+  const handleMatchRequest = async (toUserId) => {
+    try {
+      await axios.post(`${API_URL}/api/matches/request`, { fromUserId: userId, toUserId });
+      setMatches(matches.map(m => m.userId === toUserId ? { ...m, matchStatus: 'sent_pending' } : m));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send request');
+    }
+  };
+
+  const handleRespond = async (requestId, status) => {
+    try {
+      await axios.put(`${API_URL}/api/matches/respond`, { requestId, status });
+      // Remove from pending requests
+      setRequests(requests.filter(r => r._id !== requestId));
+      // Optionally update the matchStatus in the main feed if that user is also in our match list
+      setMatches(matches.map(m => m.matchStatus === 'received_pending' ? { ...m, matchStatus: status } : m));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to respond');
+    }
+  };
+
+  const calculateCompleteness = () => {
+    if (!userData) return 0;
+    const fields = [userData.fullName, userData.username, userData.jobTitle, userData.tagline, userData.location, userData.bio];
+    const filled = fields.filter(field => field && field.trim().length > 0).length;
+    return Math.round((filled / fields.length) * 100);
+  };
+  const completeness = calculateCompleteness();
 
   if (loading) {
     return (
@@ -34,131 +73,314 @@ export default function SmartMatches() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="flex flex-col lg:flex-row gap-8 items-start max-w-[1400px] mx-auto">
       
-      {/* Header */}
-      <div className="bg-white/95 backdrop-blur rounded-[28px] border border-white/70 p-8 shadow-[0_30px_70px_-28px_rgba(15,23,42,0.35)]">
-        <div className="flex items-center gap-4 mb-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/30">
-            <Sparkles size={28} />
+      {/* LEFT COLUMN: Profile & Navigation */}
+      <div className="w-full lg:w-64 shrink-0 space-y-6 hidden md:block">
+        {/* Profile Card */}
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden relative cursor-pointer" onClick={() => navigate('/settings')}>
+          <div className="h-24 bg-gradient-to-r from-blue-500 to-cyan-400 relative"></div>
+          <div className="px-5 pb-5 relative">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white absolute -top-10 shadow-sm bg-white flex items-center justify-center text-slate-300">
+              {userData?.profilePicture ? (
+                <img src={userData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User size={32} />
+              )}
+            </div>
+            <div className="pt-12">
+              <h2 className="text-lg font-bold text-slate-900 leading-tight">{userData?.fullName || 'Anonymous User'}</h2>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                {userData?.jobTitle || 'SkillSwap Member'} {userData?.tagline ? `• ${userData.tagline}` : ''}
+              </p>
+              <div className="flex items-center gap-1 text-xs text-slate-400 mt-2">
+                <MapPin size={12} /> {userData?.location || 'Location not set'}
+              </div>
+            </div>
+            
+            <div className="mt-5 pt-5 border-t border-slate-50">
+              <div className="flex justify-between text-xs font-semibold mb-2">
+                <span className="text-blue-600">Profile completeness</span>
+                <span className="text-blue-600">{completeness}%</span>
+              </div>
+              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${completeness}%` }}></div>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Smart Matches</h1>
-            <p className="text-slate-500 text-lg">We analyzed skills, proficiencies, and needs to find your perfect learning partners.</p>
+        </div>
+
+        {/* Navigation Sidebar */}
+        <nav className="space-y-1">
+          <Link to="/matches" className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold transition-all">
+            <Grid size={18} /> Smart matches
+          </Link>
+          <Link to="/dashboard" className="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-all">
+            <BookMarked size={18} /> My skill library
+          </Link>
+          <Link to="/community" className="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-all">
+            <Users size={18} /> My exchanges
+          </Link>
+          <Link to="/settings" className="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-all">
+            <SettingsIcon size={18} /> Settings
+          </Link>
+        </nav>
+      </div>
+
+      {/* MIDDLE COLUMN: Refine Matches (Filters) */}
+      <div className="w-full lg:w-64 shrink-0 hidden xl:block">
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 sticky top-24">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-slate-900 text-lg">Refine matches</h3>
+            <Filter size={18} className="text-blue-600" />
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Skill Category</label>
+              <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                <option>Design & Creative</option>
+                <option>Development</option>
+                <option>Business</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Availability</label>
+              <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                <option>Any time</option>
+                <option>Weekends</option>
+                <option>Evenings</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Experience Level</label>
+              <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                <option>Any level</option>
+                <option>Beginner</option>
+                <option>Advanced</option>
+              </select>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Match Score</label>
+                <span className="text-xs font-bold text-blue-600">85%+</span>
+              </div>
+              <input type="range" min="50" max="100" defaultValue="85" className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" />
+              <div className="flex justify-between text-xs text-slate-400 mt-1">
+                <span>50%</span>
+                <span>100%</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {matches.length === 0 ? (
-        <div className="bg-white/95 backdrop-blur rounded-[28px] border border-white/70 p-12 text-center text-slate-500 shadow-sm">
-          <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-            <ArrowRightLeft size={32} />
+      {/* RIGHT COLUMN: Main Feed */}
+      <div className="flex-1 min-w-0 space-y-6">
+        
+        {/* Header & Search */}
+        <div>
+          <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold uppercase tracking-wider mb-2">
+            <Sparkles size={14} /> Your Exchange Hub
           </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-2">No matches found yet</h3>
-          <p>Add more skills you want to learn or teach to your Dashboard to generate matches!</p>
+          <h1 className="text-3xl font-extrabold text-slate-900 mb-1 tracking-tight">Find your next learning partner.</h1>
+          <p className="text-slate-500 mb-6">Handpicked connections based on what you can share and explore.</p>
+          
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+            <input 
+              type="text" 
+              placeholder="Search people or skills" 
+              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-700"
+            />
+          </div>
         </div>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-6">
-          {matches.map((match) => (
-            <MatchCard key={match.userId} match={match} onMessage={() => navigate('/inbox')} />
-          ))}
+
+        <div className="flex justify-between items-end pb-2 pt-2">
+          <p className="text-sm font-bold text-slate-800"><span className="text-slate-900">{matches.length} recommended</span> for you this week</p>
+          <button className="text-sm font-medium text-slate-500 flex items-center gap-1 hover:text-slate-800">Best match <ArrowRightLeft size={14} className="rotate-90" /></button>
         </div>
-      )}
+
+        {/* Incoming Requests Section */}
+        {requests.length > 0 && (
+          <div className="mb-6 space-y-4">
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Pending requests ({requests.length})</h3>
+            {requests.map((req) => (
+              <div key={req._id} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-[24px] border border-blue-100 p-6 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex gap-4 items-center">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-white shrink-0 shadow-sm border border-slate-100">
+                    {req.fromUser?.profilePicture ? (
+                      <img src={req.fromUser.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={24} className="m-auto mt-3 text-slate-400" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900">{req.fromUser?.fullName || 'Anonymous User'}</h4>
+                    <p className="text-xs text-slate-600">Wants to start a skill swap with you!</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleRespond(req._id, 'rejected')} className="px-5 py-2 bg-white text-slate-600 rounded-full text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm">Reject</button>
+                  <button onClick={() => handleRespond(req._id, 'accepted')} className="px-5 py-2 bg-blue-600 text-white rounded-full text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm">Accept</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Matches List */}
+        {matches.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center text-slate-500 shadow-sm">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+              <Sparkles size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-2">No matches yet</h3>
+            <p className="text-sm">Add more skills to your library to get paired up!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {matches.map((match) => (
+              <HorizontalMatchCard 
+                key={match.userId} 
+                match={match} 
+                onRequest={() => handleMatchRequest(match.userId)} 
+                onMessage={() => navigate(`/inbox?chatWith=${match.userId}`)} 
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function MatchCard({ match, onMessage }) {
-  const { user, compatibilityScore, matchedSkills } = match;
+function HorizontalMatchCard({ match, onRequest, onMessage }) {
+  const { user, compatibilityScore, matchedSkills, matchStatus } = match;
   
-  // Calculate stroke dasharray for the score circle (circumference = 2 * pi * r)
-  const radius = 24;
+  const radius = 22;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (compatibilityScore / 100) * circumference;
   
-  let scoreColor = "text-emerald-500";
-  if (compatibilityScore < 60) scoreColor = "text-yellow-500";
-  if (compatibilityScore < 40) scoreColor = "text-slate-400";
-
   return (
-    <div className="bg-white/95 backdrop-blur rounded-[24px] border border-white/70 p-6 shadow-[0_22px_45px_-24px_rgba(15,23,42,0.34)] hover:shadow-[0_25px_50px_-20px_rgba(15,23,42,0.4)] transition-all flex flex-col h-full">
-      
-      {/* Top Section */}
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex gap-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-slate-50 shadow-sm bg-slate-100 flex items-center justify-center text-slate-300 shrink-0">
-            {user?.profilePicture ? (
-              <img src={user.profilePicture} alt={user?.fullName} className="w-full h-full object-cover" />
-            ) : (
-              <User size={28} />
+    <div className="bg-white rounded-[24px] border border-slate-100 p-6 shadow-sm hover:shadow-md transition-all relative">
+      <div className="flex flex-col sm:flex-row gap-5">
+        
+        {/* Avatar */}
+        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 shrink-0">
+          {user?.profilePicture ? (
+            <img src={user.profilePicture} alt={user?.fullName} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-slate-400"><User size={24} /></div>
+          )}
+        </div>
+
+        {/* Details */}
+        <div className="flex-1 min-w-0 pr-12 pb-12 sm:pb-0">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-bold text-lg text-slate-900 leading-none mb-1.5">{user?.fullName || 'Anonymous User'}</h3>
+              <p className="text-xs font-medium text-slate-500 mb-2">{user?.jobTitle || 'SkillSwap Member'}</p>
+              <p className="text-xs text-slate-600 line-clamp-1 mb-4">{user?.tagline || 'Passionate about learning and sharing skills.'}</p>
+            </div>
+            <button className="text-slate-400 hover:text-slate-600"><MoreHorizontal size={20}/></button>
+          </div>
+
+          {/* Skills Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+            {matchedSkills.theyCanTeachYou.length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Can teach you</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {matchedSkills.theyCanTeachYou.map(skill => (
+                    <span key={skill} className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-[11px] font-bold capitalize">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {matchedSkills.youCanTeachThem.length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Wants to learn</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {matchedSkills.youCanTeachThem.map(skill => (
+                    <span key={skill} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[11px] font-bold capitalize border border-emerald-100/50">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
-          <div>
-            <h3 className="font-bold text-xl text-slate-900 line-clamp-1">{user?.fullName || 'Anonymous User'}</h3>
-            <p className="text-sm text-slate-500 font-medium line-clamp-1">{user?.jobTitle || 'SkillSwap Member'}</p>
-          </div>
-        </div>
 
-        {/* Score Circle */}
-        <div className="relative flex items-center justify-center w-16 h-16 shrink-0">
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 56 56">
-            <circle cx="28" cy="28" r={radius} className="stroke-slate-100" strokeWidth="6" fill="none" />
-            <circle 
-              cx="28" cy="28" r={radius} 
-              className={`stroke-current ${scoreColor} transition-all duration-1000 ease-out`} 
-              strokeWidth="6" fill="none" 
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-            />
-          </svg>
-          <div className="absolute font-bold text-slate-700 text-sm">{compatibilityScore}%</div>
+          {/* Footer Metadata */}
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
+            <span className="flex items-center gap-1 text-slate-600"><Clock size={14} className="text-emerald-500" /> Tue & Thu evenings</span>
+            {matchedSkills.theyCanTeachYou.slice(0, 2).map(skill => (
+              <span key={skill} className="px-2.5 py-0.5 rounded-full border border-slate-200 capitalize">{skill}</span>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Skills Section */}
-      <div className="flex-1 space-y-4 mb-6 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-        
-        {matchedSkills.theyCanTeachYou.length > 0 && (
-          <div>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">They can teach you</p>
-            <div className="flex flex-wrap gap-2">
-              {matchedSkills.theyCanTeachYou.map(skill => (
-                <span key={skill} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-semibold capitalize">
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {matchedSkills.theyCanTeachYou.length > 0 && matchedSkills.youCanTeachThem.length > 0 && (
-          <div className="border-t border-slate-200/60 my-2"></div>
-        )}
-
-        {matchedSkills.youCanTeachThem.length > 0 && (
-          <div>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">You can teach them</p>
-            <div className="flex flex-wrap gap-2">
-              {matchedSkills.youCanTeachThem.map(skill => (
-                <span key={skill} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold capitalize">
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        
+      {/* Absolute top-right circle */}
+      <div className="absolute top-6 right-6 flex items-center justify-center w-[52px] h-[52px]">
+        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r={radius} className="stroke-slate-100" strokeWidth="5" fill="none" />
+          <circle 
+            cx="26" cy="26" r={radius} 
+            className="stroke-blue-600 transition-all duration-1000 ease-out" 
+            strokeWidth="5" fill="none" 
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+          />
+        </svg>
+        <div className="absolute font-bold text-blue-700 text-sm">{compatibilityScore}%</div>
       </div>
 
-      {/* Action */}
-      <button 
-        onClick={onMessage}
-        className="w-full py-3.5 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl font-semibold hover:opacity-90 flex items-center justify-center gap-2 shadow-md transition-opacity"
-      >
-        <MessageCircle size={18} /> Send Message
-      </button>
+      {/* Absolute bottom-right actions */}
+      <div className="absolute bottom-6 right-6 flex items-center gap-2">
+        <button 
+          onClick={onMessage}
+          className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+        >
+          <MessageCircle size={16} />
+        </button>
+        
+        {matchStatus === 'none' && (
+          <button 
+            onClick={onRequest}
+            className="px-5 py-2 bg-blue-600 text-white rounded-full text-xs font-bold hover:bg-blue-700 flex items-center gap-2 shadow-sm transition-colors"
+          >
+            Match
+          </button>
+        )}
+        
+        {matchStatus === 'sent_pending' && (
+          <button disabled className="px-5 py-2 bg-slate-100 text-slate-400 rounded-full text-xs font-bold flex items-center gap-2 border border-slate-200/50">
+            Requested
+          </button>
+        )}
 
+        {matchStatus === 'received_pending' && (
+          <div className="flex gap-2">
+            <button className="px-4 py-2 bg-slate-100 text-slate-600 rounded-full text-xs font-bold hover:bg-slate-200 transition-colors">Reject</button>
+            <button className="px-4 py-2 bg-emerald-500 text-white rounded-full text-xs font-bold hover:bg-emerald-600 transition-colors shadow-sm">Accept</button>
+          </div>
+        )}
+
+        {matchStatus === 'accepted' && (
+          <button disabled className="px-5 py-2 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold border border-emerald-200 shadow-sm">
+            Matched!
+          </button>
+        )}
+      </div>
     </div>
   );
 }
