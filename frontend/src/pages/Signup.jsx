@@ -61,6 +61,12 @@ export default function Signup() {
         email: formData.email,
         password: formData.password
       });
+      
+      // Save the newly created user's ID to localStorage so they are logged in
+      if (res.data.userId) {
+        localStorage.setItem('userId', res.data.userId);
+      }
+      
       // Redirect to onboarding after successful signup
       navigate('/onboarding');
     } catch (err) {
