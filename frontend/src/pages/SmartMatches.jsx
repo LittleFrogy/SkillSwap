@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Sparkles, MessageCircle, User, ArrowRightLeft, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Filter, Search, MoreHorizontal, Clock } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -16,9 +16,13 @@ export default function SmartMatches() {
   const [filterScore, setFilterScore] = useState(0);
   const [filterCategory, setFilterCategory] = useState('All categories');
   const [sortBy, setSortBy] = useState('Best match');
+  const [filterAvailability, setFilterAvailability] = useState('Any time');
+  const [filterExperience, setFilterExperience] = useState('Any level');
 
   const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
   const navigate = useNavigate();
+  const location = useLocation();
+  const isActive = (path) => location.pathname === path;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -86,6 +90,17 @@ export default function SmartMatches() {
       const hasSkill = m.matchedSkills.theyCanTeachYou.includes(filterCategory) || m.matchedSkills.youCanTeachThem.includes(filterCategory);
       if (!hasSkill) return false;
     }
+
+    if (filterAvailability !== 'Any time') {
+      const matchAvail = filterAvailability === 'Weekends' 
+        ? m.availabilities?.some(av => av.includes('Sat') || av.includes('Sun'))
+        : m.availabilities?.some(av => av.includes(filterAvailability));
+      if (!matchAvail) return false;
+    }
+
+    if (filterExperience !== 'Any level') {
+      if (!m.levels?.includes(filterExperience)) return false;
+    }
     
     return true;
   });
@@ -146,13 +161,13 @@ export default function SmartMatches() {
 
         {/* Navigation Sidebar */}
         <nav className="space-y-1">
-          <Link to="/matches" className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold transition-all">
+          <Link to="/matches" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/matches') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
             <Grid size={18} /> Smart matches
           </Link>
-          <Link to="/dashboard" className="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-all">
+          <Link to="/dashboard" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/dashboard') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
             <BookMarked size={18} /> My skill library
           </Link>
-          <Link to="/settings" className="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-all">
+          <Link to="/settings" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/settings') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
             <SettingsIcon size={18} /> Settings
           </Link>
         </nav>
@@ -226,19 +241,31 @@ export default function SmartMatches() {
                 
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Availability</label>
-                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                  <select 
+                    value={filterAvailability}
+                    onChange={e => setFilterAvailability(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option>Any time</option>
                     <option>Weekends</option>
-                    <option>Evenings</option>
+                    <option>Morning</option>
+                    <option>Evening</option>
+                    <option>Night</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Experience Level</label>
-                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                  <select 
+                    value={filterExperience}
+                    onChange={e => setFilterExperience(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option>Any level</option>
                     <option>Beginner</option>
+                    <option>Intermediate</option>
                     <option>Advanced</option>
+                    <option>Expert</option>
                   </select>
                 </div>
 
@@ -267,6 +294,8 @@ export default function SmartMatches() {
                       setFilterScore(0);
                       setFilterCategory('All categories');
                       setSortBy('Best match');
+                      setFilterAvailability('Any time');
+                      setFilterExperience('Any level');
                     }}
                     className="w-full py-2.5 text-blue-600 font-bold text-sm hover:bg-blue-50 rounded-xl transition-colors"
                   >

@@ -21,7 +21,6 @@ router.get('/', async (req, res) => {
     // 2. Fetch all OTHER users' listings
     const otherListings = await Listing.find({ userId: { $ne: userId } });
 
-    // Group listings by user
     const usersMap = {};
     otherListings.forEach(listing => {
       if (!usersMap[listing.userId]) {
@@ -29,7 +28,8 @@ router.get('/', async (req, res) => {
           userId: listing.userId,
           teaches: [],
           learns: [],
-          availabilities: []
+          availabilities: [],
+          levels: []
         };
       }
       if (listing.type === 'teach') {
@@ -39,6 +39,9 @@ router.get('/', async (req, res) => {
       }
       if (listing.weeklyAvailability && !usersMap[listing.userId].availabilities.includes(listing.weeklyAvailability)) {
         usersMap[listing.userId].availabilities.push(listing.weeklyAvailability);
+      }
+      if (listing.proficiencyLevel && !usersMap[listing.userId].levels.includes(listing.proficiencyLevel)) {
+        usersMap[listing.userId].levels.push(listing.proficiencyLevel);
       }
     });
 
@@ -78,12 +81,13 @@ router.get('/', async (req, res) => {
       // Cap score at 100
       score = Math.min(score, 100);
 
-      // Push all users so they are visible by default in the community
       matches.push({
         userId: otherUser.userId,
         compatibilityScore: score,
         matchedSkills,
-        availability: otherUser.availabilities[0] || 'Flexible'
+        availability: otherUser.availabilities[0] || 'Flexible',
+        availabilities: otherUser.availabilities,
+        levels: otherUser.levels
       });
     }
 
