@@ -29,6 +29,14 @@ const listingSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    days: {
+        type: [String],
+        default: []
+    },
+    times: {
+        type: [String],
+        default: []
+    },
     endorsements: {
         type: [Object],
         default: []

@@ -25,8 +25,19 @@ export default function Dashboard() {
     skill: '',
     proficiencyLevel: 'Intermediate',
     description: '',
-    weeklyAvailability: ''
+    weeklyAvailability: '',
+    days: [],
+    times: []
   });
+
+  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const TIMES = ['Morning', 'Noon', 'Afternoon', 'Evening', 'Night'];
+
+  const toggleArrayItem = (array, item) => {
+    return array.includes(item) 
+      ? array.filter(i => i !== item) 
+      : [...array, item];
+  };
 
   useEffect(() => {
     if (!localStorage.getItem('userId') && !sessionStorage.getItem('userId')) {
@@ -74,7 +85,9 @@ export default function Dashboard() {
         skill: listing.skill,
         proficiencyLevel: listing.proficiencyLevel,
         description: listing.description,
-        weeklyAvailability: listing.weeklyAvailability
+        weeklyAvailability: listing.weeklyAvailability || '',
+        days: listing.days || [],
+        times: listing.times || []
       });
     } else {
       setEditingListing(null);
@@ -83,7 +96,9 @@ export default function Dashboard() {
         skill: '',
         proficiencyLevel: 'Intermediate',
         description: '',
-        weeklyAvailability: ''
+        weeklyAvailability: '',
+        days: [],
+        times: []
       });
     }
     setIsModalOpen(true);
@@ -92,11 +107,22 @@ export default function Dashboard() {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
+      // Auto-generate weeklyAvailability string from days and times if it was empty
+      const derivedAvailability = formData.days?.length > 0 || formData.times?.length > 0 
+        ? `${formData.days?.join(', ')} ${formData.times?.length > 0 ? `(${formData.times.join(', ')})` : ''}`
+        : 'Flexible';
+
+      const payload = { 
+        ...formData, 
+        userId,
+        weeklyAvailability: derivedAvailability
+      };
+
       if (editingListing) {
-        const res = await axios.put(`${API_URL}/${editingListing._id}`, formData);
+        const res = await axios.put(`${API_URL}/${editingListing._id}`, payload);
         setListings(listings.map(l => l._id === editingListing._id ? res.data : l));
       } else {
-        const res = await axios.post(API_URL, { ...formData, userId });
+        const res = await axios.post(API_URL, payload);
         setListings([...listings, res.data]);
       }
       setIsModalOpen(false);
@@ -344,9 +370,37 @@ export default function Dashboard() {
                       <option>Expert</option>
                     </select>
                   </div>
-                  <div className="flex-1">
-                    <label className="block text-sm font-semibold text-slate-800 mb-2">Weekly availability</label>
-                    <input required type="text" placeholder="e.g. Tue & Thu evenings" className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900" value={formData.weeklyAvailability} onChange={e => setFormData({...formData, weeklyAvailability: e.target.value})} />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Weekly availability (Days)</label>
+                  <div className="flex flex-wrap gap-2">
+                    {DAYS.map(day => (
+                      <button 
+                        key={day} 
+                        type="button" 
+                        onClick={() => setFormData({...formData, days: toggleArrayItem(formData.days, day)})}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${formData.days.includes(day) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'}`}
+                      >
+                        {day}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Timings</label>
+                  <div className="flex flex-wrap gap-2">
+                    {TIMES.map(time => (
+                      <button 
+                        key={time} 
+                        type="button" 
+                        onClick={() => setFormData({...formData, times: toggleArrayItem(formData.times, time)})}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${formData.times.includes(time) ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-300 hover:border-emerald-400'}`}
+                      >
+                        {time}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -401,8 +455,17 @@ function ListingCard({ listing, onEdit, onDelete, iconColor }) {
       
       <p className="text-sm text-slate-500 mb-6 line-clamp-2 leading-relaxed">{listing.description}</p>
       
-      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 pt-4 border-t border-slate-50">
-        <Clock size={14} className="text-emerald-500" /> {listing.weeklyAvailability}
+      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 pt-4 border-t border-slate-50">
+        <Clock size={14} className="text-emerald-500" /> 
+        {listing.days?.length > 0 || listing.times?.length > 0 
+          ? (
+            <>
+              {listing.days?.length > 0 && <span>{listing.days.join(', ')}</span>}
+              {listing.days?.length > 0 && listing.times?.length > 0 && <span>•</span>}
+              {listing.times?.length > 0 && <span>{listing.times.join(', ')}</span>}
+            </>
+          ) 
+          : <span>{listing.weeklyAvailability}</span>}
       </div>
     </div>
   );
