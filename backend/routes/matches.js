@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Listing = require('../models/Listing');
 const User = require('../models/User');
+const MatchRequest = require('../models/MatchRequest');
 
 router.get('/', async (req, res) => {
   try {
@@ -86,13 +87,33 @@ router.get('/', async (req, res) => {
     // Sort by highest compatibility score first
     matches.sort((a, b) => b.compatibilityScore - a.compatibilityScore);
 
-    // 4. Attach user profile data to the matches for the UI
+    // Fetch all match requests involving this user
+    const matchRequests = await MatchRequest.find({
+      $or: [{ fromUserId: userId }, { toUserId: userId }]
+    });
+
+    // 4. Attach user profile data and match request status to the matches for the UI
     const populatedMatches = await Promise.all(
       matches.map(async (match) => {
         const userProfile = await User.findById(match.userId).select('fullName jobTitle profilePicture tagline');
+        
+        let requestStatus = 'none';
+        const existingRequest = matchRequests.find(
+          req => (req.fromUserId === userId && req.toUserId === match.userId) || 
+                 (req.fromUserId === match.userId && req.toUserId === userId)
+        );
+
+        if (existingRequest) {
+          if (existingRequest.status === 'accepted') requestStatus = 'accepted';
+          else if (existingRequest.status === 'rejected') requestStatus = 'rejected';
+          else if (existingRequest.fromUserId === userId) requestStatus = 'sent_pending';
+          else requestStatus = 'received_pending';
+        }
+
         return {
           ...match,
-          user: userProfile
+          user: userProfile,
+          matchStatus: requestStatus
         };
       })
     );
@@ -102,6 +123,83 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error("Smart Match Error:", error);
     res.status(500).json({ message: 'Error generating smart matches' });
+  }
+});
+
+// Send a match request
+router.post('/request', async (req, res) => {
+  try {
+    const { fromUserId, toUserId } = req.body;
+    if (!fromUserId || !toUserId) {
+      return res.status(400).json({ message: 'Missing user IDs' });
+    }
+
+    const existingRequest = await MatchRequest.findOne({
+      $or: [
+        { fromUserId, toUserId },
+        { fromUserId: toUserId, toUserId: fromUserId }
+      ]
+    });
+
+    if (existingRequest) {
+      return res.status(400).json({ message: 'A match request already exists between these users.' });
+    }
+
+    const newRequest = new MatchRequest({ fromUserId, toUserId, status: 'pending' });
+    await newRequest.save();
+
+    res.status(201).json(newRequest);
+  } catch (error) {
+    console.error("Match Request Error:", error);
+    res.status(500).json({ message: 'Error sending match request' });
+  }
+});
+
+// Get incoming pending requests for a user
+router.get('/requests/pending', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ message: 'User ID required' });
+
+    const requests = await MatchRequest.find({ toUserId: userId, status: 'pending' });
+    
+    // Populate user details for each request
+    const populatedRequests = await Promise.all(
+      requests.map(async (request) => {
+        const userProfile = await User.findById(request.fromUserId).select('fullName jobTitle profilePicture tagline');
+        return {
+          _id: request._id,
+          fromUser: userProfile,
+          createdAt: request.createdAt
+        };
+      })
+    );
+
+    res.status(200).json(populatedRequests);
+  } catch (error) {
+    console.error("Get Requests Error:", error);
+    res.status(500).json({ message: 'Error fetching requests' });
+  }
+});
+
+// Respond to a match request
+router.put('/respond', async (req, res) => {
+  try {
+    const { requestId, status } = req.body;
+    if (!['accepted', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const request = await MatchRequest.findById(requestId);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    request.status = status;
+    await request.save();
+
+    res.status(200).json(request);
+  } catch (error) {
+    console.error("Respond Request Error:", error);
+    res.status(500).json({ message: 'Error responding to request' });
   }
 });
 

@@ -2,8 +2,6 @@ const mongoose = require('mongoose');
 
 const listingSchema = new mongoose.Schema({
     userId: {
-        // In a real app this would be mongoose.Schema.Types.ObjectId ref to 'User'
-        // For this module without full auth, we'll just use a string
         type: String,
         required: true,
         default: 'user_123'
