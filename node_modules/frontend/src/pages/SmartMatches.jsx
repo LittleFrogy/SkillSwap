@@ -11,6 +11,12 @@ export default function SmartMatches() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  // Filter States
+  const [filterScore, setFilterScore] = useState(50);
+  const [filterCategory, setFilterCategory] = useState('All categories');
+  const [sortBy, setSortBy] = useState('Best match');
+
   const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
   const navigate = useNavigate();
 
@@ -64,6 +70,33 @@ export default function SmartMatches() {
     return Math.round((filled / fields.length) * 100);
   };
   const completeness = calculateCompleteness();
+
+  // Extract unique skills from matches for the filter dropdown
+  const uniqueSkills = Array.from(
+    new Set(
+      matches.flatMap(m => [...m.matchedSkills.theyCanTeachYou, ...m.matchedSkills.youCanTeachThem])
+    )
+  ).sort();
+
+  // Apply Filters and Sorting
+  let filteredMatches = matches.filter(m => {
+    if (m.compatibilityScore < filterScore) return false;
+    
+    if (filterCategory !== 'All categories') {
+      const hasSkill = m.matchedSkills.theyCanTeachYou.includes(filterCategory) || m.matchedSkills.youCanTeachThem.includes(filterCategory);
+      if (!hasSkill) return false;
+    }
+    
+    return true;
+  });
+
+  if (sortBy === 'Best match') {
+    filteredMatches.sort((a, b) => b.compatibilityScore - a.compatibilityScore);
+  } else if (sortBy === 'Score (Lowest First)') {
+    filteredMatches.sort((a, b) => a.compatibilityScore - b.compatibilityScore);
+  } else if (sortBy === 'Name (A-Z)') {
+    filteredMatches.sort((a, b) => (a.user?.fullName || '').localeCompare(b.user?.fullName || ''));
+  }
 
   if (loading) {
     return (
@@ -119,9 +152,6 @@ export default function SmartMatches() {
           <Link to="/dashboard" className="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-all">
             <BookMarked size={18} /> My skill library
           </Link>
-          <Link to="/community" className="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-all">
-            <Users size={18} /> My exchanges
-          </Link>
           <Link to="/settings" className="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-all">
             <SettingsIcon size={18} /> Settings
           </Link>
@@ -169,20 +199,28 @@ export default function SmartMatches() {
               <div className="space-y-6">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Sort By</label>
-                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                  <select 
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option>Best match</option>
-                    <option>Newest</option>
-                    <option>Highest experience</option>
+                    <option>Score (Lowest First)</option>
+                    <option>Name (A-Z)</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Skill Category</label>
-                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                  <select 
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option>All categories</option>
-                    <option>Design & Creative</option>
-                    <option>Development</option>
-                    <option>Business</option>
+                    {uniqueSkills.map(skill => (
+                      <option key={skill} value={skill}>{skill}</option>
+                    ))}
                   </select>
                 </div>
                 
@@ -207,17 +245,31 @@ export default function SmartMatches() {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Match Score</label>
-                    <span className="text-xs font-bold text-blue-600">85%+</span>
+                    <span className="text-xs font-bold text-blue-600">{filterScore}%+</span>
                   </div>
-                  <input type="range" min="50" max="100" defaultValue="85" className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" />
+                  <input 
+                    type="range" 
+                    min="10" 
+                    max="100" 
+                    value={filterScore}
+                    onChange={(e) => setFilterScore(Number(e.target.value))}
+                    className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" 
+                  />
                   <div className="flex justify-between text-xs text-slate-400 mt-1">
-                    <span>50%</span>
+                    <span>10%</span>
                     <span>100%</span>
                   </div>
                 </div>
 
                 <div className="pt-2">
-                  <button className="w-full py-2.5 text-blue-600 font-bold text-sm hover:bg-blue-50 rounded-xl transition-colors">
+                  <button 
+                    onClick={() => {
+                      setFilterScore(50);
+                      setFilterCategory('All categories');
+                      setSortBy('Best match');
+                    }}
+                    className="w-full py-2.5 text-blue-600 font-bold text-sm hover:bg-blue-50 rounded-xl transition-colors"
+                  >
                     Reset filters
                   </button>
                 </div>
@@ -255,17 +307,17 @@ export default function SmartMatches() {
         )}
 
         {/* Matches List */}
-        {matches.length === 0 ? (
+        {filteredMatches.length === 0 ? (
           <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center text-slate-500 shadow-sm">
             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
               <Sparkles size={24} />
             </div>
-            <h3 className="text-lg font-bold text-slate-800 mb-2">No matches yet</h3>
-            <p className="text-sm">Add more skills to your library to get paired up!</p>
+            <h3 className="text-lg font-bold text-slate-800 mb-2">No matches found</h3>
+            <p className="text-sm">Try adjusting your filters or adding more skills!</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {matches.map((match) => (
+            {filteredMatches.map((match) => (
               <HorizontalMatchCard 
                 key={match.userId} 
                 match={match} 

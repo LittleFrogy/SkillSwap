@@ -10,7 +10,7 @@ import Endorsements from './pages/Endorsements';
 import Inbox from './pages/Inbox';
 import Community from './pages/Community';
 import SmartMatches from './pages/SmartMatches';
-import { Bell, User, Sparkles } from 'lucide-react';
+import { Bell, User } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -107,7 +107,7 @@ function Navbar() {
               : "border-transparent text-slate-500 hover:text-slate-900"
           }`}
         >
-          <Sparkles size={16} className={isActive("/matches") ? "text-purple-600" : "text-slate-400"} /> Matches
+          Matches
         </Link>
       </div>
 
