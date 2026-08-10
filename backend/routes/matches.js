@@ -29,12 +29,16 @@ router.get('/', async (req, res) => {
           userId: listing.userId,
           teaches: [],
           learns: [],
+          availabilities: []
         };
       }
       if (listing.type === 'teach') {
         usersMap[listing.userId].teaches.push(listing.skill.toLowerCase());
       } else if (listing.type === 'learn') {
         usersMap[listing.userId].learns.push(listing.skill.toLowerCase());
+      }
+      if (listing.weeklyAvailability && !usersMap[listing.userId].availabilities.includes(listing.weeklyAvailability)) {
+        usersMap[listing.userId].availabilities.push(listing.weeklyAvailability);
       }
     });
 
@@ -78,7 +82,8 @@ router.get('/', async (req, res) => {
       matches.push({
         userId: otherUser.userId,
         compatibilityScore: score,
-        matchedSkills
+        matchedSkills,
+        availability: otherUser.availabilities[0] || 'Flexible'
       });
     }
 

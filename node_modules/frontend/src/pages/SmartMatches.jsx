@@ -394,7 +394,10 @@ function HorizontalMatchCard({ match, onRequest, onMessage }) {
 
           {/* Footer Metadata */}
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
-            <span className="flex items-center gap-1 text-slate-600"><Clock size={14} className="text-emerald-500" /> Tue & Thu evenings</span>
+            <span className="flex items-center gap-1 text-slate-600">
+              <Clock size={14} className="text-emerald-500" /> 
+              {match.availability}
+            </span>
             {matchedSkills.theyCanTeachYou.slice(0, 2).map(skill => (
               <span key={skill} className="px-2.5 py-0.5 rounded-full border border-slate-200 capitalize">{skill}</span>
             ))}
