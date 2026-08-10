@@ -10,6 +10,7 @@ export default function SmartMatches() {
   const [requests, setRequests] = useState([]);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
   const navigate = useNavigate();
 
@@ -127,57 +128,6 @@ export default function SmartMatches() {
         </nav>
       </div>
 
-      {/* MIDDLE COLUMN: Refine Matches (Filters) */}
-      <div className="w-full lg:w-64 shrink-0 hidden xl:block">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 sticky top-24">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-slate-900 text-lg">Refine matches</h3>
-            <Filter size={18} className="text-blue-600" />
-          </div>
-
-          <div className="space-y-6">
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Skill Category</label>
-              <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                <option>Design & Creative</option>
-                <option>Development</option>
-                <option>Business</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Availability</label>
-              <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                <option>Any time</option>
-                <option>Weekends</option>
-                <option>Evenings</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Experience Level</label>
-              <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                <option>Any level</option>
-                <option>Beginner</option>
-                <option>Advanced</option>
-              </select>
-            </div>
-
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Match Score</label>
-                <span className="text-xs font-bold text-blue-600">85%+</span>
-              </div>
-              <input type="range" min="50" max="100" defaultValue="85" className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" />
-              <div className="flex justify-between text-xs text-slate-400 mt-1">
-                <span>50%</span>
-                <span>100%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* RIGHT COLUMN: Main Feed */}
       <div className="flex-1 min-w-0 space-y-6">
         
@@ -199,9 +149,81 @@ export default function SmartMatches() {
           </div>
         </div>
 
-        <div className="flex justify-between items-end pb-2 pt-2">
+        <div className="flex justify-between items-end pb-2 pt-2 relative">
           <p className="text-sm font-bold text-slate-800"><span className="text-slate-900">{matches.length} recommended</span> for you this week</p>
-          <button className="text-sm font-medium text-slate-500 flex items-center gap-1 hover:text-slate-800">Best match <ArrowRightLeft size={14} className="rotate-90" /></button>
+          <button 
+            onClick={() => setIsFilterOpen(!isFilterOpen)} 
+            className="text-sm font-medium text-slate-500 flex items-center gap-1.5 hover:text-slate-800 transition-colors"
+          >
+            <Filter size={14} /> Filter & Sort
+          </button>
+          
+          {/* Dropdown Filter Menu */}
+          {isFilterOpen && (
+            <div className="absolute top-10 right-0 w-[280px] bg-white rounded-3xl shadow-xl border border-slate-100 p-6 z-50">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-slate-900 text-lg">Refine matches</h3>
+                <Filter size={18} className="text-blue-600" />
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Sort By</label>
+                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>Best match</option>
+                    <option>Newest</option>
+                    <option>Highest experience</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Skill Category</label>
+                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>All categories</option>
+                    <option>Design & Creative</option>
+                    <option>Development</option>
+                    <option>Business</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Availability</label>
+                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>Any time</option>
+                    <option>Weekends</option>
+                    <option>Evenings</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Experience Level</label>
+                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>Any level</option>
+                    <option>Beginner</option>
+                    <option>Advanced</option>
+                  </select>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Match Score</label>
+                    <span className="text-xs font-bold text-blue-600">85%+</span>
+                  </div>
+                  <input type="range" min="50" max="100" defaultValue="85" className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" />
+                  <div className="flex justify-between text-xs text-slate-400 mt-1">
+                    <span>50%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button className="w-full py-2.5 text-blue-600 font-bold text-sm hover:bg-blue-50 rounded-xl transition-colors">
+                    Reset filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Incoming Requests Section */}
