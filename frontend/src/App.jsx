@@ -10,7 +10,8 @@ import Endorsements from './pages/Endorsements';
 import Inbox from './pages/Inbox';
 import Community from './pages/Community';
 import SmartMatches from './pages/SmartMatches';
-import { Bell, User } from 'lucide-react';
+import SkillCredits from './pages/SkillCredits';
+import { Bell, User, Coins } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -19,10 +20,12 @@ function Navbar() {
   const isActive = (path) => location.pathname === path;
   const userId = localStorage.getItem("userId") || sessionStorage.getItem("userId");
   const [profilePicture, setProfilePicture] = useState("");
+  const [skillCredits, setSkillCredits] = useState(5);
 
   useEffect(() => {
     if (!userId) {
       setProfilePicture("");
+      setSkillCredits(5);
       return;
     }
 
@@ -33,6 +36,15 @@ function Navbar() {
       })
       .catch((error) => {
         console.error("Failed to load profile picture:", error);
+      });
+
+    axios
+      .get(`${API_URL}/api/credits/balance/${userId}`)
+      .then((response) => {
+        setSkillCredits(response.data.skillCredits ?? 5);
+      })
+      .catch((error) => {
+        console.error("Failed to load credit balance:", error);
       });
   }, [userId, location.pathname]);
 
@@ -78,6 +90,18 @@ function Navbar() {
         </Link>
 
         <Link
+          to="/credits"
+          className={`flex items-center gap-1.5 border-b-2 py-2 md:py-5 font-bold whitespace-nowrap ${
+            isActive("/credits")
+              ? "border-amber-500 text-amber-600"
+              : "border-transparent text-slate-600 hover:text-amber-600"
+          }`}
+        >
+          <Coins size={17} className="text-amber-500 fill-amber-400" />
+          Credits Ledger
+        </Link>
+
+        <Link
           to="/inbox"
           className={`border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
             isActive("/inbox")
@@ -112,11 +136,15 @@ function Navbar() {
       </div>
 
       {/* 3. Profile & Actions (Right) */}
-      <div className="flex items-center gap-4 md:gap-6 order-2 md:order-3">
-        <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-          1,240 skills shared
-        </div>
+      <div className="flex items-center gap-3 md:gap-5 order-2 md:order-3">
+        {/* Live Skill Credits Pill Badge */}
+        <Link
+          to="/credits"
+          className="flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs md:text-sm font-bold text-amber-800 hover:bg-amber-100 transition-colors shadow-xs"
+        >
+          <span className="text-base">🪙</span>
+          <span>{skillCredits} Credits</span>
+        </Link>
 
         <button
           type="button"
@@ -163,6 +191,7 @@ function App() {
             <Route path="/signin" element={<Signin />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/credits" element={<SkillCredits />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/endorsements" element={<Endorsements />} />
             <Route path="/inbox" element={<Inbox />} />

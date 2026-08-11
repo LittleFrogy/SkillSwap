@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User, BadgeCheck } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User, BadgeCheck, Coins } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -220,6 +220,9 @@ export default function Dashboard() {
         <nav className="space-y-1">
           <Link to="/matches" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/matches') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
             <Grid size={18} /> Smart matches
+          </Link>
+          <Link to="/credits" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/credits') ? 'bg-amber-50 text-amber-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
+            <Coins size={18} className="text-amber-500" /> Skill credits
           </Link>
           <Link to="/dashboard" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/dashboard') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
             <BookMarked size={18} /> My skill library
