@@ -15,12 +15,14 @@ exports.getComments = async (req, res) => {
 // Create a comment
 exports.createComment = async (req, res) => {
   try {
-    const { postId, content, parentCommentId } = req.body;
+    const { postId, content, parentCommentId, authorName, authorRole } = req.body;
 
     const newComment = new Comment({
       postId,
       content,
       parentCommentId: parentCommentId || null,
+      authorName: authorName || "Rebecca Hughes",
+      authorRole: authorRole || "Guitarist",
     });
 
     const savedComment = await newComment.save();

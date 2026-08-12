@@ -4,6 +4,10 @@ import { BiImageAdd } from "react-icons/bi";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");
+const CURRENT_USER = storedName ? storedName : "Rebecca Hughes";
+const CURRENT_ROLE = localStorage.getItem("role") || "Learner";
+
 export default function CreatePostBox({ onPostCreated }) {
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
@@ -13,23 +17,29 @@ export default function CreatePostBox({ onPostCreated }) {
 
     if (!content.trim() && !image) return;
 
+    let base64Image = "";
+    if (image) {
+      base64Image = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(image);
+      });
+    }
+
     try {
-      const formData = new FormData();
-      formData.append("content", content);
-
-      if (image) {
-        formData.append("image", image);
-      }
-
       await axios.post(
         `${API_URL}/api/posts`,
-        formData
+        {
+          authorName: CURRENT_USER,
+          authorRole: CURRENT_ROLE,
+          content,
+          image: base64Image
+        }
       );
 
       setContent("");
       setImage(null);
-
-      document.getElementById("imageInput").value = "";
 
       onPostCreated();
     } catch (err) {

@@ -3,7 +3,8 @@ import { BiLike, BiBulb, BiHelpCircle } from "react-icons/bi";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const CURRENT_USER = "Rebecca Hughes";
+const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");
+const CURRENT_USER = storedName ? storedName : "Rebecca Hughes";
 
 function CommentCard({ comment, onReact, onReply, comments, level = 0 }) {
   const [isReplying, setIsReplying] = useState(false);
@@ -38,8 +39,13 @@ function CommentCard({ comment, onReact, onReply, comments, level = 0 }) {
         </div>
         <div className="flex-1">
           <div className="bg-gray-50 rounded-2xl p-3 inline-block">
-            <h4 className="font-semibold text-gray-900 text-sm">
+            <h4 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
               {comment.authorName}
+              {comment.isActiveCommenter && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wider">
+                  Top Contributor
+                </span>
+              )}
             </h4>
             <p className="text-gray-700 text-sm mt-1">{comment.content}</p>
           </div>
@@ -159,6 +165,8 @@ export default function CommentSection({ postId }) {
           postId,
           content,
           parentCommentId,
+          authorName: CURRENT_USER,
+          authorRole: localStorage.getItem("role") || "Learner"
         }),
       });
 
@@ -201,7 +209,7 @@ export default function CommentSection({ postId }) {
       {/* Top Level Input */}
       <div className="flex gap-3 mb-6">
         <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0">
-          R {/* Hardcoded current user initial */}
+          {CURRENT_USER.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 flex gap-2">
           <input

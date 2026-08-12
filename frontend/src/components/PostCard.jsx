@@ -9,7 +9,8 @@ import CommentSection from "./CommentSection";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const CURRENT_USER = "Rebecca Hughes";
+const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");
+const CURRENT_USER = storedName ? storedName : "Rebecca Hughes";
 
 export default function PostCard({ post }) {
   const [showComments, setShowComments] = useState(false);
@@ -84,10 +85,9 @@ export default function PostCard({ post }) {
         {post.content}
       </p>
 
-      {/* Uploaded Image */}
       {post.image && (
         <img
-          src={`${API_URL}/${post.image}`}
+          src={post.image.startsWith('data:') ? post.image : `${API_URL}/${post.image}`}
           alt="Post"
           className="rounded-xl mt-4 w-full max-h-125 object-cover"
         />
