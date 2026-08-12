@@ -148,9 +148,31 @@ router.post('/session-exchange', async (req, res) => {
 
     const transferAmount = Number(amount) > 0 ? Number(amount) : 2;
 
+    let actualLearnerId = learnerId;
+    let actualTeacherId = teacherId;
+
     if (isConnected()) {
-      const learner = await User.findById(learnerId);
-      const teacher = await User.findById(teacherId);
+      // Validate ObjectIds before querying to prevent CastErrors
+      const isValidLearner = mongoose.Types.ObjectId.isValid(actualLearnerId);
+      const isValidTeacher = mongoose.Types.ObjectId.isValid(actualTeacherId);
+
+      let learner = isValidLearner ? await User.findById(actualLearnerId) : null;
+      let teacher = isValidTeacher ? await User.findById(actualTeacherId) : null;
+
+      // Auto-create demo partner if they are using the default "user_2" mock ID in the UI
+      if (!isValidLearner && actualLearnerId === 'user_2') {
+        const demoPartnerId = new mongoose.Types.ObjectId();
+        learner = new User({ _id: demoPartnerId, fullName: 'Bob Martin (Demo)', username: 'bob_demo_' + Date.now(), email: 'bob' + Date.now() + '@demo.local', password: 'pwd', skillCredits: 10 });
+        await learner.save();
+        actualLearnerId = demoPartnerId.toString();
+      }
+      
+      if (!isValidTeacher && actualTeacherId === 'user_2') {
+        const demoPartnerId = new mongoose.Types.ObjectId();
+        teacher = new User({ _id: demoPartnerId, fullName: 'Bob Martin (Demo)', username: 'bob_demo_' + Date.now(), email: 'bob' + Date.now() + '@demo.local', password: 'pwd', skillCredits: 10 });
+        await teacher.save();
+        actualTeacherId = demoPartnerId.toString();
+      }
 
       if (!learner) return res.status(404).json({ message: 'Learner user not found.' });
       if (!teacher) return res.status(404).json({ message: 'Teacher user not found.' });
@@ -171,12 +193,12 @@ router.post('/session-exchange', async (req, res) => {
 
       // Write ledger entries
       const learnerTx = new CreditTransaction({
-        userId: learnerId,
+        userId: actualLearnerId,
         type: 'spent',
         amount: transferAmount,
         title: `Learned: ${skill}`,
         description: description || `Completed learning session for ${skill}`,
-        partnerUserId: teacherId,
+        partnerUserId: actualTeacherId,
         partnerName: teacher.fullName || 'Teacher',
         skill,
         sessionId,
@@ -184,12 +206,12 @@ router.post('/session-exchange', async (req, res) => {
       });
 
       const teacherTx = new CreditTransaction({
-        userId: teacherId,
+        userId: actualTeacherId,
         type: 'earned',
         amount: transferAmount,
         title: `Taught: ${skill}`,
         description: description || `Completed teaching session for ${skill}`,
-        partnerUserId: learnerId,
+        partnerUserId: actualLearnerId,
         partnerName: learner.fullName || 'Learner',
         skill,
         sessionId,
@@ -201,8 +223,8 @@ router.post('/session-exchange', async (req, res) => {
 
       return res.json({
         message: `Successfully exchanged ${transferAmount} skill credits!`,
-        learner: { userId: learnerId, balance: learner.skillCredits },
-        teacher: { userId: teacherId, balance: teacher.skillCredits },
+        learner: { userId: actualLearnerId, balance: learner.skillCredits },
+        teacher: { userId: actualTeacherId, balance: teacher.skillCredits },
         transactions: [learnerTx, teacherTx]
       });
     }
