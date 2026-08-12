@@ -15,9 +15,14 @@ function Inbox() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [editingMessageId, setEditingMessageId] = useState(null);
+  const [pendingAttachment, setPendingAttachment] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
   const [searchParams] = useSearchParams();
 
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   const currentUserId =
     localStorage.getItem("userId") ||
@@ -63,6 +68,7 @@ function Inbox() {
       text: message.text,
       createdAt: message.createdAt,
       updatedAt: message.updatedAt,
+      attachment: message.attachment || null,
     }));
 
   const loadConversationMessages = async (otherUserId) => {
@@ -81,6 +87,7 @@ function Inbox() {
     setSelectedConversation(conversation);
     setEditingMessageId(null);
     setNewMessage("");
+    setPendingAttachment(null);
     setIsLoading(true);
 
     setConversationList((previousConversations) =>
@@ -131,7 +138,7 @@ function Inbox() {
     if (
       !currentUserId ||
       !selectedConversation ||
-      newMessage.trim() === ""
+      (newMessage.trim() === "" && !pendingAttachment)
     ) {
       return;
     }
@@ -146,6 +153,7 @@ function Inbox() {
           senderId: currentUserId,
           receiverId: selectedConversation.id,
           text: newMessage.trim(),
+          attachment: pendingAttachment,
         }),
       });
 
@@ -165,6 +173,7 @@ function Inbox() {
         text: savedMessage.text,
         createdAt: savedMessage.createdAt,
         updatedAt: savedMessage.updatedAt,
+        attachment: savedMessage.attachment || null,
       };
 
       setAllMessages((previousMessages) => ({
@@ -180,7 +189,7 @@ function Inbox() {
           conversation.id === selectedConversation.id
             ? {
               ...conversation,
-              lastMessage: savedMessage.text,
+              lastMessage: savedMessage.text || savedMessage.attachment?.name || "Attachment",
               time: "Now",
             }
             : conversation
@@ -188,10 +197,146 @@ function Inbox() {
       );
 
       setNewMessage("");
+      setPendingAttachment(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (error) {
       console.error(error);
       alert(error.message || "The message could not be saved.");
     }
+  };
+
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileSelect = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Please choose a file smaller than 5 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      const data = await fileToDataUrl(file);
+      setPendingAttachment({
+        name: file.name,
+        type: file.type || "application/octet-stream",
+        data,
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Could not attach that file.");
+    }
+  };
+
+  const startRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+      alert("Voice recording is not supported in this browser.");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+
+      recorder.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, {
+          type: recorder.mimeType || "audio/webm",
+        });
+        const voiceFile = new File([blob], `voice-note-${Date.now()}.webm`, {
+          type: blob.type || "audio/webm",
+        });
+
+        if (voiceFile.size > 5 * 1024 * 1024) {
+          alert("Voice note is too large. Please record a shorter note.");
+        } else {
+          const data = await fileToDataUrl(voiceFile);
+          setPendingAttachment({
+            name: voiceFile.name,
+            type: voiceFile.type,
+            data,
+          });
+        }
+
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error(error);
+      alert("Microphone permission is needed to record a voice note.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  };
+
+  const renderAttachment = (attachment, isCurrentUser) => {
+    if (!attachment?.data) return null;
+
+    if (attachment.type?.startsWith("image/")) {
+      return (
+        <a href={attachment.data} download={attachment.name} className="block">
+          <img
+            src={attachment.data}
+            alt={attachment.name}
+            className="mb-2 max-h-64 max-w-full rounded-lg object-cover"
+          />
+        </a>
+      );
+    }
+
+    if (attachment.type?.startsWith("audio/")) {
+      return (
+        <div className="mb-2">
+          <audio controls src={attachment.data} className="max-w-full" />
+          <a
+            href={attachment.data}
+            download={attachment.name}
+            className={`mt-1 block text-xs underline ${
+              isCurrentUser ? "text-blue-100" : "text-blue-600"
+            }`}
+          >
+            Download voice note
+          </a>
+        </div>
+      );
+    }
+
+    return (
+      <a
+        href={attachment.data}
+        download={attachment.name}
+        className={`mb-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+          isCurrentUser
+            ? "border-blue-300 bg-blue-500 text-white"
+            : "border-gray-200 bg-gray-50 text-blue-600"
+        }`}
+      >
+        <span>📎</span>
+        <span className="break-all">{attachment.name}</span>
+      </a>
+    );
   };
 
   const handleDeleteMessage = async (messageId) => {
@@ -561,7 +706,9 @@ function Inbox() {
                                 : "rounded-bl-sm bg-white text-gray-800 shadow-sm"
                                 }`}
                             >
-                              <p>{message.text}</p>
+                              {renderAttachment(message.attachment, isCurrentUser)}
+
+                              {message.text && <p>{message.text}</p>}
 
                               <p
                                 className={`mt-1 text-right text-xs ${isCurrentUser
@@ -607,7 +754,54 @@ function Inbox() {
                 </div>
 
                 <div className="border-t border-gray-200 p-4">
+                  {pendingAttachment && !editingMessageId && (
+                    <div className="mb-3 flex items-center justify-between rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800">
+                      <span className="truncate">📎 {pendingAttachment.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPendingAttachment(null);
+                          if (fileInputRef.current) fileInputRef.current.value = "";
+                        }}
+                        className="ml-3 font-semibold hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+
                   <div className="flex gap-3">
+                    {!editingMessageId && (
+                      <>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="rounded-lg border border-gray-300 px-3 py-3 text-xl hover:bg-gray-100"
+                          title="Attach image or file"
+                        >
+                          📎
+                        </button>
+                        <button
+                          type="button"
+                          onClick={isRecording ? stopRecording : startRecording}
+                          className={`rounded-lg border px-3 py-3 text-xl ${
+                            isRecording
+                              ? "border-red-300 bg-red-50"
+                              : "border-gray-300 hover:bg-gray-100"
+                          }`}
+                          title={isRecording ? "Stop recording" : "Record voice note"}
+                        >
+                          {isRecording ? "⏹️" : "🎙️"}
+                        </button>
+                      </>
+                    )}
+
                     <input
                       type="text"
                       value={newMessage}
@@ -650,7 +844,9 @@ function Inbox() {
                           : handleSendMessage
                       }
                       disabled={
-                        newMessage.trim() === "" || !currentUser
+                        (!editingMessageId && newMessage.trim() === "" && !pendingAttachment) ||
+                        (editingMessageId && newMessage.trim() === "") ||
+                        !currentUser
                       }
                       className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >

@@ -7,11 +7,14 @@ const router = express.Router();
 // Create a message
 router.post("/", async (request, response) => {
   try {
-    const { senderId, receiverId, text } = request.body;
+    const { senderId, receiverId, text = "", attachment = null } = request.body;
 
-    if (!senderId || !receiverId || !text?.trim()) {
+    const hasText = text.trim().length > 0;
+    const hasAttachment = Boolean(attachment?.data);
+
+    if (!senderId || !receiverId || (!hasText && !hasAttachment)) {
       return response.status(400).json({
-        message: "Sender ID, receiver ID, and text are required.",
+        message: "Sender ID, receiver ID, and message text or attachment are required.",
       });
     }
 
@@ -28,6 +31,13 @@ router.post("/", async (request, response) => {
       senderId,
       receiverId,
       text: text.trim(),
+      attachment: hasAttachment
+        ? {
+            name: attachment.name || "attachment",
+            type: attachment.type || "application/octet-stream",
+            data: attachment.data,
+          }
+        : undefined,
     });
 
     response.status(201).json(newMessage);
