@@ -4,11 +4,11 @@ import { BiImageAdd } from "react-icons/bi";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");
-const CURRENT_USER = storedName ? storedName : "Rebecca Hughes";
-const CURRENT_ROLE = localStorage.getItem("role") || "Learner";
-
 export default function CreatePostBox({ onPostCreated }) {
+  const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");
+  const CURRENT_USER = storedName ? storedName : "Rebecca Hughes";
+  const CURRENT_ROLE = localStorage.getItem("role") || "Learner";
+
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
 

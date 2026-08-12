@@ -33,6 +33,14 @@ function Navbar() {
       .get(`${API_URL}/api/users/${userId}`)
       .then((response) => {
         setProfilePicture(response.data.profilePicture || "");
+        
+        // Sync user data to localStorage for legacy active sessions
+        if (response.data.fullName) {
+          localStorage.setItem('fullName', response.data.fullName);
+        }
+        if (response.data.username) {
+          localStorage.setItem('username', response.data.username);
+        }
       })
       .catch((error) => {
         console.error("Failed to load profile picture:", error);

@@ -29,8 +29,12 @@ export default function Signin() {
       // Store token or user ID (in real app, handle JWT)
       if (formData.rememberMe) {
         localStorage.setItem('userId', res.data.userId);
+        localStorage.setItem('fullName', res.data.user?.fullName || "");
+        localStorage.setItem('username', res.data.user?.username || "");
       } else {
         sessionStorage.setItem('userId', res.data.userId);
+        sessionStorage.setItem('fullName', res.data.user?.fullName || "");
+        sessionStorage.setItem('username', res.data.user?.username || "");
       }
       // Redirect to dashboard
       navigate('/dashboard');

@@ -3,10 +3,12 @@ import { BiLike, BiBulb, BiHelpCircle } from "react-icons/bi";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");
-const CURRENT_USER = storedName ? storedName : "Rebecca Hughes";
+
 
 function CommentCard({ comment, onReact, onReply, comments, level = 0 }) {
+  const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");
+  const CURRENT_USER = storedName ? storedName : "Rebecca Hughes";
+
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
 
@@ -120,6 +122,9 @@ function CommentCard({ comment, onReact, onReply, comments, level = 0 }) {
 }
 
 export default function CommentSection({ postId }) {
+  const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");
+  const CURRENT_USER = storedName ? storedName : "Rebecca Hughes";
+
   const [comments, setComments] = useState([]);
   const [newCommentText, setNewCommentText] = useState("");
   const [loading, setLoading] = useState(true);

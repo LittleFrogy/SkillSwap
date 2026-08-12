@@ -9,10 +9,10 @@ import CommentSection from "./CommentSection";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");
-const CURRENT_USER = storedName ? storedName : "Rebecca Hughes";
-
 export default function PostCard({ post }) {
+  const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");
+  const CURRENT_USER = storedName ? storedName : "Rebecca Hughes";
+  
   const [showComments, setShowComments] = useState(false);
   const [reactions, setReactions] = useState(() => {
     const defaultReactions = { like: [], helpful: [], insightful: [] };
