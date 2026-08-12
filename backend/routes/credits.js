@@ -284,7 +284,7 @@ router.post('/session-exchange', async (req, res) => {
 
   } catch (err) {
     console.error("Session credit exchange error:", err);
-    res.status(500).json({ message: 'Error processing credit exchange', error: err.message });
+    res.status(500).json({ message: 'Error: ' + err.message, error: err.message });
   }
 });
 
