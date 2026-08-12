@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import CreatePostBox from "../components/CreatePostBox";
-import PostCard from "../components/PostCard";
+import CreatePostBox from "./components/CreatePostBox";
+import PostCard from "./components/PostCard";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -24,11 +24,12 @@ export default function Community() {
   }, []);
 
   return (
-    <div className="bg-[#f9fafb]">
+    <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-1">
           Community Forum
         </h1>
+
         <p className="text-gray-500 mb-6">
           Discover what the community is learning and sharing today
         </p>

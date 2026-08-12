@@ -9,7 +9,8 @@ const listingRoutes = require("./routes/listings");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 const endorsementRoutes = require("./routes/endorsements");
-const postRoutes = require("./routes/postRoutes");
+const postRoutes = require("./routes/posts");
+const commentRoutes = require("./routes/comments");
 const matchRoutes = require("./routes/matches");
 const creditRoutes = require("./routes/credits");
 
@@ -26,6 +27,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/endorsements", endorsementRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/comments", commentRoutes);
 app.use("/api/matches", matchRoutes);
 app.use("/api/credits", creditRoutes);
 

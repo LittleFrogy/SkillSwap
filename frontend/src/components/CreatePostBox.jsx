@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { BiImageAdd } from "react-icons/bi";
 
@@ -7,34 +7,6 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 export default function CreatePostBox({ onPostCreated }) {
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
-  const [userData, setUserData] = useState(null);
-  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/api/users/${userId}`);
-        setUserData(res.data);
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-      }
-    };
-    fetchUser();
-  }, [userId]);
-
-  // Helper function to convert file to Base64 string
-  const convertToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const fileReader = new FileReader();
-      fileReader.readAsDataURL(file);
-      fileReader.onload = () => {
-        resolve(fileReader.result);
-      };
-      fileReader.onerror = (error) => {
-        reject(error);
-      };
-    });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,18 +14,20 @@ export default function CreatePostBox({ onPostCreated }) {
     if (!content.trim() && !image) return;
 
     try {
-      let base64Image = "";
+      const formData = new FormData();
+      formData.append("content", content);
+
       if (image) {
-        base64Image = await convertToBase64(image);
+        formData.append("image", image);
       }
 
       await axios.post(
         `${API_URL}/api/posts`,
+        formData,
         {
-          content,
-          image: base64Image,
-          authorName: userData?.fullName || "Anonymous User",
-          authorRole: userData?.jobTitle || "SkillSwap Member"
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
 

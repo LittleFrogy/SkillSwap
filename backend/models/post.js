@@ -5,7 +5,11 @@ const postSchema = new mongoose.Schema({
   authorRole: { type: String, default: "Guitarist" },
   content: { type: String, required: true },
   image: { type: String, default: "" },
-  likes: { type: Number, default: 0 },
+  reactions: {
+    like: [{ type: String }],
+    helpful: [{ type: String }],
+    insightful: [{ type: String }]
+  },
   comments: { type: Number, default: 0 },
   shares: { type: Number, default: 0 }
 }, { timestamps: true });
