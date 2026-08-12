@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import CreatePostBox from "./components/CreatePostBox";
-import PostCard from "./components/PostCard";
+import CreatePostBox from "../components/CreatePostBox";
+import PostCard from "../components/PostCard";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
