@@ -1,5 +1,5 @@
-const Comment = require("../models/comment");
-const Post = require("../models/post");
+const Comment = require("../models/Comment");
+const Post = require("../models/Post");
 
 // Get comments for a post
 exports.getComments = async (req, res) => {
