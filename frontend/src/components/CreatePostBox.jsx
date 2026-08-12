@@ -23,12 +23,7 @@ export default function CreatePostBox({ onPostCreated }) {
 
       await axios.post(
         `${API_URL}/api/posts`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
 
       setContent("");
