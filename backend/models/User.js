@@ -47,6 +47,11 @@ const userSchema = new mongoose.Schema({
   skillCredits: {
     type: Number,
     default: 5
+  },
+
+  preferredLanguage: {
+    type: String,
+    default: "en"
   }
 }, { timestamps: true });
 

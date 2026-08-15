@@ -31,11 +31,29 @@ router.get('/:id', async (req, res) => {
 
 // Update User Profile
 router.put('/:id', async (req, res) => {
-    const { fullName, jobTitle, tagline, location, bio, profilePicture } = req.body;
+    const {
+        fullName,
+        jobTitle,
+        tagline,
+        location,
+        bio,
+        profilePicture,
+        preferredLanguage
+        } = req.body;
     try {
         const user = await User.findByIdAndUpdate(
             req.params.id,
-            { $set: { fullName, jobTitle, tagline, location, bio, profilePicture } },
+            {
+                $set: {
+                    fullName,
+                    jobTitle,
+                    tagline,
+                    location,
+                    bio,
+                    profilePicture,
+                    preferredLanguage
+                }
+            },
             { new: true, runValidators: true }
         ).select('-password');
 
