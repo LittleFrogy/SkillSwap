@@ -15,9 +15,6 @@ export default function SessionRoom() {
   const currentUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
 
   useEffect(() => {
-    // In a real scenario, you'd fetch the session details to get the Daily.co URL.
-    // For now, we'll hit an endpoint if it existed, or just mock it based on the URL.
-    // Since we don't have a GET /api/sessions/:id route yet, let's simulate the fetch.
     const fetchSession = async () => {
       try {
         setLoading(true);
