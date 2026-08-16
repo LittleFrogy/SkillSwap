@@ -55,8 +55,16 @@ export default function Sessions() {
 
   const now = new Date();
   
-  const upcomingSessions = sessions.filter(s => new Date(s.scheduledTime) >= now && s.status !== 'cancelled');
-  const pastSessions = sessions.filter(s => new Date(s.scheduledTime) < now || s.status === 'cancelled');
+  // Upcoming includes sessions scheduled in the future, OR sessions that started less than 2 hours ago
+  const upcomingSessions = sessions.filter(s => {
+    const sessionEndTime = new Date(new Date(s.scheduledTime).getTime() + (2 * 60 * 60 * 1000));
+    return sessionEndTime >= now && s.status !== 'cancelled';
+  });
+  
+  const pastSessions = sessions.filter(s => {
+    const sessionEndTime = new Date(new Date(s.scheduledTime).getTime() + (2 * 60 * 60 * 1000));
+    return sessionEndTime < now || s.status === 'cancelled';
+  });
 
   const displaySessions = activeTab === 'upcoming' ? upcomingSessions : pastSessions;
 
@@ -246,7 +254,11 @@ function SessionCard({ session, currentUserId, navigate, onEndorse }) {
   const isTeacher = session.teacherId?._id === currentUserId || session.teacherId === currentUserId;
   const partner = isTeacher ? session.learnerId : session.teacherId;
   const dateObj = new Date(session.scheduledTime);
-  const isPast = dateObj < new Date();
+  
+  // A session is considered "past" (and completed) only 2 hours AFTER its scheduled start time.
+  // This gives users a 2-hour window to actually join and conduct the video call.
+  const sessionEndTime = new Date(dateObj.getTime() + (2 * 60 * 60 * 1000));
+  const isPast = sessionEndTime < new Date();
 
   return (
     <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row justify-between items-center gap-6">
