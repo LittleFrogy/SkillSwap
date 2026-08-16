@@ -41,16 +41,18 @@ export default function SkillCredits() {
   // Filtering & Searching
   const [activeTab, setActiveTab] = useState('all'); // all, earned, spent, grant
   const [searchQuery, setSearchQuery] = useState('');
+  const [completedSessions, setCompletedSessions] = useState([]);
 
   // Exchange Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [exchangeForm, setExchangeForm] = useState({
     role: 'teacher', // 'teacher' (I taught) or 'learner' (I learned)
     skill: '',
-    partnerUserId: 'user_2',
-    partnerName: 'Bob Martin',
+    partnerUserId: '',
+    partnerName: '',
     amount: 2,
-    description: ''
+    description: '',
+    sessionId: ''
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -68,9 +70,10 @@ export default function SkillCredits() {
     try {
       setLoading(true);
       setError('');
-      const [balanceRes, ledgerRes] = await Promise.all([
+      const [balanceRes, ledgerRes, sessionsRes] = await Promise.all([
         axios.get(`${CREDITS_API}/balance/${userId}`),
-        axios.get(`${CREDITS_API}/ledger/${userId}`)
+        axios.get(`${CREDITS_API}/ledger/${userId}`),
+        axios.get(`${BASE_URL}/api/endorsements/sessions?userId=${userId}`)
       ]);
 
       setCreditSummary({
@@ -80,6 +83,7 @@ export default function SkillCredits() {
         totalTransactions: balanceRes.data.totalTransactions ?? 0
       });
       setLedger(ledgerRes.data || []);
+      setCompletedSessions(sessionsRes.data || []);
     } catch (err) {
       console.error("Failed to load credits data:", err);
       setError('Could not fetch latest credit data. Showing local session view.');
@@ -123,10 +127,11 @@ export default function SkillCredits() {
       setExchangeForm({
         role: 'teacher',
         skill: '',
-        partnerUserId: 'user_2',
-        partnerName: 'Bob Martin',
+        partnerUserId: '',
+        partnerName: '',
         amount: 2,
-        description: ''
+        description: '',
+        sessionId: ''
       });
 
       // Refresh ledger & balance
@@ -453,19 +458,44 @@ export default function SkillCredits() {
                   />
                 </div>
 
-                {/* Partner Name / ID */}
+                {/* Partner / Session Selection */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                     Peer Partner Name
                   </label>
-                  <input
+                  <select
                     required
-                    type="text"
-                    placeholder="e.g. Bob Martin, Mina Patel"
-                    value={exchangeForm.partnerName}
-                    onChange={(e) => setExchangeForm({ ...exchangeForm, partnerName: e.target.value })}
-                    className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 text-sm"
-                  />
+                    value={exchangeForm.sessionId}
+                    onChange={(e) => {
+                      const selected = completedSessions.find(s => s._id === e.target.value);
+                      if (selected) {
+                        const isTeacher = selected.teacherId._id === userId;
+                        const partner = isTeacher ? selected.learnerId : selected.teacherId;
+                        setExchangeForm({ 
+                          ...exchangeForm, 
+                          sessionId: selected._id,
+                          partnerUserId: partner._id,
+                          partnerName: partner.fullName,
+                          skill: selected.skill,
+                          role: isTeacher ? 'teacher' : 'learner'
+                        });
+                      }
+                    }}
+                    className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 text-sm bg-white appearance-none"
+                  >
+                    <option value="" disabled>Select a completed session...</option>
+                    {completedSessions.map(session => {
+                      const isTeacher = session.teacherId._id === userId;
+                      const partner = isTeacher ? session.learnerId : session.teacherId;
+                      const dateObj = new Date(session.scheduledTime);
+                      const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                      return (
+                        <option key={session._id} value={session._id}>
+                          {partner.fullName} - {session.skill} ({dateStr})
+                        </option>
+                      );
+                    })}
+                  </select>
                 </div>
 
                 {/* Amount */}
