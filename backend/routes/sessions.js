@@ -8,7 +8,11 @@ const path = require('path');
 const fs = require('fs');
 
 // Initialize Google Calendar API if service account JSON exists
-const keyPath = path.join(__dirname, '../google-service-account.json');
+let keyPath = path.join(__dirname, '../google-service-account.json');
+if (!fs.existsSync(keyPath)) {
+  keyPath = '/etc/secrets/google-service-account.json'; // Render secret files path
+}
+
 let calendar = null;
 
 try {
