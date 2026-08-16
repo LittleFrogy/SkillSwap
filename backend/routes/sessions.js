@@ -3,6 +3,28 @@ const router = express.Router();
 const Session = require('../models/Session');
 const User = require('../models/User');
 const axios = require('axios');
+const { google } = require('googleapis');
+const path = require('path');
+const fs = require('fs');
+
+// Initialize Google Calendar API if service account JSON exists
+const keyPath = path.join(__dirname, '../google-service-account.json');
+let calendar = null;
+
+try {
+  if (fs.existsSync(keyPath)) {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: keyPath,
+      scopes: ['https://www.googleapis.com/auth/calendar.events'],
+    });
+    calendar = google.calendar({ version: 'v3', auth });
+    console.log("✅ Google Calendar API initialized");
+  } else {
+    console.warn("⚠️ google-service-account.json not found. Calendar invites skipped.");
+  }
+} catch (err) {
+  console.error("Failed to initialize Google Calendar API:", err.message);
+}
 
 // POST /api/sessions/schedule
 // Schedules a session, generates a Daily.co video room, and (optionally) a Google Calendar event
@@ -47,8 +69,56 @@ router.post('/schedule', async (req, res) => {
       return res.status(500).json({ message: 'Failed to create video room.' });
     }
 
-    // 2. TODO: Google Calendar Integration
-    // We will build this out in the next step using a Service Account or OAuth
+    // 2. Google Calendar Integration
+    let googleEventId = null;
+    
+    if (calendar) {
+      try {
+        const teacherUser = await User.findById(teacherId);
+        const learnerUser = await User.findById(learnerId);
+
+        if (teacherUser && learnerUser) {
+          const startTime = new Date(scheduledTime);
+          const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour duration
+
+          const event = {
+            summary: `SkillSwap Session: ${skill}`,
+            location: videoRoomUrl || 'Virtual Room on SkillSwap',
+            description: `**SkillSwap Virtual Session**\n\n**Topic:** ${skill}\n**Notes:** ${notes || 'No specific agenda provided.'}\n\n**Join Video Room:** ${videoRoomUrl || 'Link will be available in your dashboard.'}`,
+            start: {
+              dateTime: startTime.toISOString(),
+              timeZone: 'UTC', // Using UTC, Google automatically converts to the user's timezone in their calendar UI
+            },
+            end: {
+              dateTime: endTime.toISOString(),
+              timeZone: 'UTC',
+            },
+            attendees: [
+              { email: teacherUser.email },
+              { email: learnerUser.email }
+            ],
+            reminders: {
+              useDefault: false,
+              overrides: [
+                { method: 'email', minutes: 24 * 60 },
+                { method: 'popup', minutes: 15 },
+              ],
+            },
+          };
+
+          const calendarResponse = await calendar.events.insert({
+            calendarId: 'primary',
+            resource: event,
+            sendUpdates: 'all' // Sends the email invitation to users
+          });
+
+          googleEventId = calendarResponse.data.id;
+        }
+      } catch (calError) {
+        console.error('Error creating Google Calendar event:', calError.message);
+        // We won't block the session creation if calendar fails
+      }
+    }
 
     // 3. Save Session to Database
     const newSession = new Session({
@@ -57,7 +127,8 @@ router.post('/schedule', async (req, res) => {
       skill,
       scheduledTime,
       notes,
-      videoRoomUrl
+      videoRoomUrl,
+      googleEventId
     });
 
     await newSession.save();

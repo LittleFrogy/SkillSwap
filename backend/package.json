@@ -18,6 +18,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "form-data": "^4.0.6",
+    "googleapis": "^174.0.1",
     "mongoose": "^9.9.1",
     "multer": "^2.2.0"
   },
