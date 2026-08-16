@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Eye, EyeOff, Sparkles, ShieldCheck } from 'lucide-react';
 
 const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/endorsements`;
 
 export default function Endorsements() {
-  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
   const [endorsements, setEndorsements] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
+    if (!userId) {
+      navigate('/signin');
+      return;
+    }
     fetchEndorsements();
-  }, [userId]);
+  }, [userId, navigate]);
 
   const fetchEndorsements = async () => {
     try {

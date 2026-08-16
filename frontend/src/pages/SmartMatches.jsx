@@ -30,12 +30,16 @@ export default function SmartMatches() {
   const [filterAvailability, setFilterAvailability] = useState('Any time');
   const [filterExperience, setFilterExperience] = useState('Any level');
 
-  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
 
   useEffect(() => {
+    if (!userId) {
+      navigate('/signin');
+      return;
+    }
     const fetchData = async () => {
       try {
         const [matchesRes, userRes, requestsRes] = await Promise.all([

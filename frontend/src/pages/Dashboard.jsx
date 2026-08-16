@@ -12,7 +12,7 @@ export default function Dashboard() {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
 
-  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
   const [listings, setListings] = useState([]);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,8 +44,9 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (!localStorage.getItem('userId') && !sessionStorage.getItem('userId')) {
-      localStorage.setItem('userId', 'demo-user');
+    if (!userId) {
+      navigate('/signin');
+      return;
     }
     fetchData();
   }, [userId, navigate]);

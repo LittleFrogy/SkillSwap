@@ -24,7 +24,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const CREDITS_API = `${BASE_URL}/api/credits`;
 
 export default function SkillCredits() {
-  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
 
   const [creditSummary, setCreditSummary] = useState({
     skillCredits: 5,
@@ -53,9 +53,15 @@ export default function SkillCredits() {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
+    if (!userId) {
+      navigate('/signin');
+      return;
+    }
     fetchCreditsData();
-  }, [userId]);
+  }, [userId, navigate]);
 
   const fetchCreditsData = async () => {
     try {
