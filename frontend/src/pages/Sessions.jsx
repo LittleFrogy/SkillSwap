@@ -11,6 +11,12 @@ export default function Sessions() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' | 'past'
 
+  // Endorsement Modal State
+  const [isEndorseModalOpen, setIsEndorseModalOpen] = useState(false);
+  const [selectedSessionForEndorsement, setSelectedSessionForEndorsement] = useState(null);
+  const [endorsementComment, setEndorsementComment] = useState('');
+  const [submittingEndorsement, setSubmittingEndorsement] = useState(false);
+
   const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,6 +59,32 @@ export default function Sessions() {
   const pastSessions = sessions.filter(s => new Date(s.scheduledTime) < now || s.status === 'cancelled');
 
   const displaySessions = activeTab === 'upcoming' ? upcomingSessions : pastSessions;
+
+  const handleEndorseSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedSessionForEndorsement) return;
+    setSubmittingEndorsement(true);
+    try {
+      const isTeacher = selectedSessionForEndorsement.teacherId?._id === userId || selectedSessionForEndorsement.teacherId === userId;
+      const partner = isTeacher ? selectedSessionForEndorsement.learnerId : selectedSessionForEndorsement.teacherId;
+      
+      await axios.post(`${API_URL}/api/endorsements`, {
+        fromUserId: userId,
+        toUserId: partner._id,
+        sessionId: selectedSessionForEndorsement._id,
+        skill: selectedSessionForEndorsement.skill,
+        comment: endorsementComment
+      });
+      alert('Endorsement sent successfully!');
+      setIsEndorseModalOpen(false);
+      setEndorsementComment('');
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to submit endorsement.');
+    } finally {
+      setSubmittingEndorsement(false);
+    }
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 items-start max-w-6xl mx-auto">
@@ -159,16 +191,58 @@ export default function Sessions() {
         ) : (
           <div className="space-y-4">
             {displaySessions.map(session => (
-              <SessionCard key={session._id} session={session} currentUserId={userId} navigate={navigate} />
+              <SessionCard 
+                key={session._id} 
+                session={session} 
+                currentUserId={userId} 
+                navigate={navigate} 
+                onEndorse={() => {
+                  setSelectedSessionForEndorsement(session);
+                  setIsEndorseModalOpen(true);
+                }}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {/* ENDORSEMENT MODAL */}
+      {isEndorseModalOpen && selectedSessionForEndorsement && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
+            <div className="p-6 md:p-8">
+              <h3 className="font-bold text-2xl text-slate-900 mb-2">Endorse Partner</h3>
+              <p className="text-sm text-slate-500 mb-6">Leave a public endorsement for their {selectedSessionForEndorsement.skill} skills.</p>
+              
+              <form onSubmit={handleEndorseSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Your Comment</label>
+                  <textarea 
+                    required 
+                    rows="3" 
+                    value={endorsementComment} 
+                    onChange={e => setEndorsementComment(e.target.value)} 
+                    className="w-full p-3 rounded-xl border border-slate-300 outline-none text-sm focus:ring-2 focus:ring-emerald-500 resize-none" 
+                    placeholder="E.g., Great mentor, explained things very clearly!"
+                  ></textarea>
+                </div>
+
+                <div className="pt-4 flex justify-end gap-3">
+                  <button type="button" onClick={() => setIsEndorseModalOpen(false)} className="px-5 py-2 text-slate-600 font-semibold hover:bg-slate-100 rounded-xl text-sm transition-colors">Cancel</button>
+                  <button type="submit" disabled={submittingEndorsement} className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl text-sm shadow-md hover:opacity-95 disabled:opacity-70 transition-all">
+                    {submittingEndorsement ? 'Submitting...' : 'Submit Endorsement'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function SessionCard({ session, currentUserId, navigate }) {
+function SessionCard({ session, currentUserId, navigate, onEndorse }) {
   const isTeacher = session.teacherId?._id === currentUserId || session.teacherId === currentUserId;
   const partner = isTeacher ? session.learnerId : session.teacherId;
   const dateObj = new Date(session.scheduledTime);
@@ -204,9 +278,14 @@ function SessionCard({ session, currentUserId, navigate }) {
             Join Room
           </button>
         ) : (
-          <span className="px-4 py-2 bg-slate-100 text-slate-500 rounded-lg text-sm font-bold">
-            Completed
-          </span>
+          <div className="flex flex-col gap-2 w-full md:w-auto">
+            <span className="px-4 py-2 bg-slate-100 text-slate-500 rounded-lg text-sm font-bold text-center">
+              Completed
+            </span>
+            <button onClick={onEndorse} className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-bold hover:bg-emerald-100 transition-colors border border-emerald-200 shadow-sm">
+              Endorse Partner
+            </button>
+          </div>
         )}
       </div>
 
