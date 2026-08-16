@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingListing, setEditingListing] = useState(null);
+  const [uniqueSkills, setUniqueSkills] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState('');
   const [endorsementForm, setEndorsementForm] = useState({ skill: '', comment: '' });
@@ -51,14 +52,16 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const [listingsRes, userRes, sessionsRes] = await Promise.all([
+      const [listingsRes, userRes, sessionsRes, skillsRes] = await Promise.all([
         axios.get(`${API_URL}?userId=${userId}`),
         axios.get(`${USER_API_URL}/${userId}`),
-        axios.get(`${BASE_URL}/api/endorsements/sessions?userId=${userId}`)
+        axios.get(`${BASE_URL}/api/endorsements/sessions?userId=${userId}`),
+        axios.get(`${API_URL}/skills/unique`)
       ]);
       setListings(listingsRes.data);
       setUserData(userRes.data);
       setSessions(sessionsRes.data);
+      setUniqueSkills(skillsRes.data);
       if (sessionsRes.data[0]) {
         setSelectedSession(sessionsRes.data[0].sessionId);
         setEndorsementForm((current) => ({ ...current, skill: sessionsRes.data[0].skill }));
@@ -350,6 +353,13 @@ export default function Dashboard() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+            
+            <datalist id="dashboard-skills-list">
+              {uniqueSkills.map(skill => (
+                <option key={skill} value={skill} />
+              ))}
+            </datalist>
+
             <div className="p-6">
               <div className="flex justify-between items-start mb-6">
                 <div>
@@ -366,7 +376,7 @@ export default function Dashboard() {
               <form onSubmit={handleSave} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Skill name</label>
-                  <input required type="text" placeholder="e.g. Product Design" className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900" value={formData.skill} onChange={e => setFormData({ ...formData, skill: e.target.value })} />
+                  <input required type="text" list="dashboard-skills-list" placeholder="e.g. Product Design" className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900" value={formData.skill} onChange={e => setFormData({ ...formData, skill: e.target.value })} />
                 </div>
 
                 <div className="flex gap-4">

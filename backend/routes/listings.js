@@ -32,6 +32,23 @@ let mockListings = [
   }
 ];
 
+// GET /api/listings/skills/unique
+// Fetches a list of all unique skills currently in the database to help with autocomplete/dropdowns
+router.get('/skills/unique', async (req, res) => {
+  try {
+    if (isConnected()) {
+      const uniqueSkills = await Listing.distinct('skill');
+      return res.json(uniqueSkills.sort());
+    }
+    
+    // Fallback to mock listings
+    const skills = [...new Set(mockListings.map(l => l.skill))];
+    res.json(skills.sort());
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // GET /api/listings
 router.get('/', async (req, res) => {
   try {

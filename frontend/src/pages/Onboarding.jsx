@@ -7,11 +7,18 @@ const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/
 
 export default function Onboarding() {
   const [step, setStep] = useState(1);
+  const [uniqueSkills, setUniqueSkills] = useState([]);
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
 
   useEffect(() => {
-    if (!userId) navigate('/signin');
+    if (!userId) {
+      navigate('/signin');
+      return;
+    }
+    axios.get(`${API_URL}/skills/unique`)
+      .then(res => setUniqueSkills(res.data))
+      .catch(err => console.error("Error fetching unique skills", err));
   }, [userId, navigate]);
 
   const emptyTeach = { skill: '', proficiencyLevel: 'Intermediate', description: '', weeklyAvailability: '', days: [], times: [] };
@@ -90,6 +97,12 @@ export default function Onboarding() {
         <div className="bg-blue-600 h-full transition-all duration-300" style={{ width: `${(step / 4) * 100}%` }} />
       </div>
 
+      <datalist id="skills-list">
+        {uniqueSkills.map(skill => (
+          <option key={skill} value={skill} />
+        ))}
+      </datalist>
+
       <div className="p-8">
         {step === 1 && (
           <div className="text-center space-y-6 py-12">
@@ -134,6 +147,7 @@ export default function Onboarding() {
                     <label className="block text-sm font-semibold text-slate-800 mb-2">Skill #{idx + 1} (e.g. React, Guitar, Spanish)</label>
                     <input 
                       type="text" 
+                      list="skills-list"
                       className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
                       value={data.skill}
                       onChange={e => updateTeach(idx, 'skill', e.target.value)}
@@ -244,6 +258,7 @@ export default function Onboarding() {
                     <label className="block text-sm font-semibold text-slate-800 mb-2">Skill #{idx + 1} (e.g. Python, UI Design)</label>
                     <input 
                       type="text" 
+                      list="skills-list"
                       className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
                       value={data.skill}
                       onChange={e => updateLearn(idx, 'skill', e.target.value)}
