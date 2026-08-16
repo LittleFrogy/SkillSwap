@@ -14,6 +14,7 @@ const postRoutes = require("./routes/posts");
 const commentRoutes = require("./routes/comments");
 const matchRoutes = require("./routes/matches");
 const creditRoutes = require("./routes/credits");
+const sessionRoutes = require("./routes/sessions");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,6 +33,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/matches", matchRoutes);
 app.use("/api/credits", creditRoutes);
+app.use("/api/sessions", sessionRoutes);
 
 // Connect to the shared MongoDB database
 if (process.env.MONGO_URI) {

@@ -11,7 +11,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
-  
+
   const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId') || 'demo-user';
   const [listings, setListings] = useState([]);
   const [userData, setUserData] = useState(null);
@@ -22,7 +22,7 @@ export default function Dashboard() {
   const [selectedSession, setSelectedSession] = useState('');
   const [endorsementForm, setEndorsementForm] = useState({ skill: '', comment: '' });
   const [submittingEndorsement, setSubmittingEndorsement] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     type: 'teach',
     skill: '',
@@ -37,8 +37,8 @@ export default function Dashboard() {
   const TIMES = ['Morning', 'Noon', 'Afternoon', 'Evening', 'Night'];
 
   const toggleArrayItem = (array, item) => {
-    return array.includes(item) 
-      ? array.filter(i => i !== item) 
+    return array.includes(item)
+      ? array.filter(i => i !== item)
       : [...array, item];
   };
 
@@ -110,13 +110,13 @@ export default function Dashboard() {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      // Auto-generate weeklyAvailability string from days and times if it was empty
-      const derivedAvailability = formData.days?.length > 0 || formData.times?.length > 0 
+      //Auto weeklyAvailability string from days and times if it was empty
+      const derivedAvailability = formData.days?.length > 0 || formData.times?.length > 0
         ? `${formData.days?.join(', ')} ${formData.times?.length > 0 ? `(${formData.times.join(', ')})` : ''}`
         : 'Flexible';
 
-      const payload = { 
-        ...formData, 
+      const payload = {
+        ...formData,
         userId,
         weeklyAvailability: derivedAvailability
       };
@@ -175,13 +175,13 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 items-start">
-      
+
       {/* LEFT SIDEBAR */}
       <div className="w-full lg:w-72 shrink-0 space-y-6">
         {/* Profile Card */}
         <div className="bg-white/95 backdrop-blur rounded-[28px] shadow-[0_25px_60px_-24px_rgba(15,23,42,0.35)] border border-white/70 overflow-hidden relative group cursor-pointer" onClick={() => navigate('/settings')}>
           <div className="absolute inset-0 bg-slate-900/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-            <span className="bg-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm text-slate-700 flex items-center gap-2"><Edit2 size={14}/> Edit Profile</span>
+            <span className="bg-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm text-slate-700 flex items-center gap-2"><Edit2 size={14} /> Edit Profile</span>
           </div>
           <div className="h-28 bg-[linear-gradient(120deg,_#0f172a_0%,_#1d4ed8_40%,_#38bdf8_100%)] relative overflow-hidden">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.28),_transparent_35%)]"></div>
@@ -203,7 +203,7 @@ export default function Dashboard() {
                 <MapPin size={14} /> {userData?.location || 'No location set'}
               </div>
             </div>
-            
+
             <div className="mt-6 pt-6 border-t border-slate-100">
               <div className="flex justify-between text-xs font-semibold mb-2">
                 <span className="text-slate-600">Profile completeness</span>
@@ -235,7 +235,7 @@ export default function Dashboard() {
 
       {/* MAIN CONTENT */}
       <div className="flex-1 min-w-0">
-        
+
         {/* Header Section */}
         <div className="flex justify-between items-start mb-10">
           <div>
@@ -245,7 +245,7 @@ export default function Dashboard() {
             <h1 className="text-4xl font-bold text-slate-900 mb-2">Shape your skill story.</h1>
             <p className="text-slate-500 text-lg">The more specific you are, the better your matches become.</p>
           </div>
-          <button 
+          <button
             onClick={() => openModal('teach')}
             className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full font-semibold hover:opacity-95 flex items-center gap-2 shadow-[0_12px_30px_-12px_rgba(37,99,235,0.7)]"
           >
@@ -269,7 +269,7 @@ export default function Dashboard() {
               <Plus size={16} /> Add skill
             </button>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-6">
             {teachListings.map(l => (
               <ListingCard key={l._id} listing={l} onEdit={() => openModal('teach', l)} onDelete={() => handleDelete(l._id)} iconColor="blue" />
@@ -293,7 +293,7 @@ export default function Dashboard() {
               <Plus size={16} /> Add skill
             </button>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-6">
             {learnListings.map(l => (
               <ListingCard key={l._id} listing={l} onEdit={() => openModal('learn', l)} onDelete={() => handleDelete(l._id)} iconColor="emerald" />
@@ -363,13 +363,13 @@ export default function Dashboard() {
               <form onSubmit={handleSave} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Skill name</label>
-                  <input required type="text" placeholder="e.g. Product Design" className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900" value={formData.skill} onChange={e => setFormData({...formData, skill: e.target.value})} />
+                  <input required type="text" placeholder="e.g. Product Design" className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900" value={formData.skill} onChange={e => setFormData({ ...formData, skill: e.target.value })} />
                 </div>
-                
+
                 <div className="flex gap-4">
                   <div className="flex-1">
                     <label className="block text-sm font-semibold text-slate-800 mb-2">Proficiency level</label>
-                    <select className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900 appearance-none bg-white" value={formData.proficiencyLevel} onChange={e => setFormData({...formData, proficiencyLevel: e.target.value})}>
+                    <select className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900 appearance-none bg-white" value={formData.proficiencyLevel} onChange={e => setFormData({ ...formData, proficiencyLevel: e.target.value })}>
                       <option>Beginner</option>
                       <option>Intermediate</option>
                       <option>Advanced</option>
@@ -382,10 +382,10 @@ export default function Dashboard() {
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Weekly availability (Days)</label>
                   <div className="flex flex-wrap gap-2">
                     {DAYS.map(day => (
-                      <button 
-                        key={day} 
-                        type="button" 
-                        onClick={() => setFormData({...formData, days: toggleArrayItem(formData.days, day)})}
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, days: toggleArrayItem(formData.days, day) })}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${formData.days.includes(day) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'}`}
                       >
                         {day}
@@ -398,10 +398,10 @@ export default function Dashboard() {
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Timings</label>
                   <div className="flex flex-wrap gap-2">
                     {TIMES.map(time => (
-                      <button 
-                        key={time} 
-                        type="button" 
-                        onClick={() => setFormData({...formData, times: toggleArrayItem(formData.times, time)})}
+                      <button
+                        key={time}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, times: toggleArrayItem(formData.times, time) })}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${formData.times.includes(time) ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-300 hover:border-emerald-400'}`}
                       >
                         {time}
@@ -412,7 +412,7 @@ export default function Dashboard() {
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">Description</label>
-                  <textarea required rows="3" placeholder="Describe what you can offer..." className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900 resize-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                  <textarea required rows="3" placeholder="Describe what you can offer..." className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-900 resize-none" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                 </div>
 
                 <div className="pt-6 flex justify-end gap-4">
@@ -436,7 +436,7 @@ function ListingCard({ listing, onEdit, onDelete, iconColor }) {
     yellow: 'bg-yellow-50 text-yellow-600',
     purple: 'bg-purple-50 text-purple-600',
   };
-  
+
   // Pick random color for visual flair, default to passed prop
   const iconBg = isTeach ? colorMap.blue : colorMap.emerald;
 
@@ -447,30 +447,30 @@ function ListingCard({ listing, onEdit, onDelete, iconColor }) {
           <Sparkles size={16} />
         </div>
         <div className="flex gap-2 text-slate-400">
-          <button onClick={onEdit} className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"><Edit2 size={16}/></button>
-          <button onClick={onDelete} className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"><Trash2 size={16}/></button>
+          <button onClick={onEdit} className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"><Edit2 size={16} /></button>
+          <button onClick={onDelete} className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"><Trash2 size={16} /></button>
         </div>
       </div>
-      
+
       <div className="flex justify-between items-start mb-3">
         <h3 className="font-bold text-lg text-slate-900">{listing.skill}</h3>
         <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold border border-blue-100">
           {listing.proficiencyLevel}
         </span>
       </div>
-      
+
       <p className="text-sm text-slate-500 mb-6 line-clamp-2 leading-relaxed">{listing.description}</p>
-      
+
       <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 pt-4 border-t border-slate-50">
-        <Clock size={14} className="text-emerald-500" /> 
-        {listing.days?.length > 0 || listing.times?.length > 0 
+        <Clock size={14} className="text-emerald-500" />
+        {listing.days?.length > 0 || listing.times?.length > 0
           ? (
             <>
               {listing.days?.length > 0 && <span>{listing.days.join(', ')}</span>}
               {listing.days?.length > 0 && listing.times?.length > 0 && <span>•</span>}
               {listing.times?.length > 0 && <span>{listing.times.join(', ')}</span>}
             </>
-          ) 
+          )
           : <span>{listing.weeklyAvailability}</span>}
       </div>
     </div>
