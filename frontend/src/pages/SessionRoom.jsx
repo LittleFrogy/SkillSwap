@@ -21,21 +21,9 @@ export default function SessionRoom() {
     const fetchSession = async () => {
       try {
         setLoading(true);
-        // Assuming we add a GET /api/sessions/:id route later
-        // const res = await axios.get(`${API_URL}/api/sessions/${sessionId}`);
-        // setSessionData(res.data);
-        
-        // MOCK DATA for now until the backend route is built
-        setTimeout(() => {
-          setSessionData({
-            _id: sessionId,
-            skill: 'React Advanced Concepts',
-            videoRoomUrl: 'https://skillswap.daily.co/demo-room', // Replace with dynamic URL later
-            status: 'scheduled'
-          });
-          setLoading(false);
-        }, 1000);
-        
+        const res = await axios.get(`${API_URL}/api/sessions/${sessionId}`);
+        setSessionData(res.data);
+        setLoading(false);
       } catch (err) {
         console.error(err);
         setError('Failed to load session details.');

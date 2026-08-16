@@ -99,4 +99,30 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
+// GET /api/sessions/:sessionId
+// Fetch a specific session by ID
+router.get('/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+      return res.status(400).json({ message: 'Invalid session ID' });
+    }
+
+    const session = await Session.findById(sessionId)
+      .populate('teacherId', 'fullName username profilePicture')
+      .populate('learnerId', 'fullName username profilePicture');
+
+    if (!session) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+
+    res.json(session);
+  } catch (error) {
+    console.error('Error fetching session:', error);
+    res.status(500).json({ message: 'Failed to fetch session details.' });
+  }
+});
+
 module.exports = router;
