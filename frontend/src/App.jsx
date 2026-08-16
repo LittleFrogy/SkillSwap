@@ -12,6 +12,7 @@ import Community from './pages/Community';
 import SmartMatches from './pages/SmartMatches';
 import SkillCredits from './pages/SkillCredits';
 import SessionRoom from './pages/SessionRoom';
+import Sessions from './pages/Sessions';
 import { Bell, User, Coins } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -99,18 +100,6 @@ function Navbar() {
         </Link>
 
         <Link
-          to="/credits"
-          className={`flex items-center gap-1.5 border-b-2 py-2 md:py-5 font-bold whitespace-nowrap ${
-            isActive("/credits")
-              ? "border-amber-500 text-amber-600"
-              : "border-transparent text-slate-600 hover:text-amber-600"
-          }`}
-        >
-          <Coins size={17} className="text-amber-500 fill-amber-400" />
-          Credits Ledger
-        </Link>
-
-        <Link
           to="/inbox"
           className={`border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
             isActive("/inbox")
@@ -130,17 +119,6 @@ function Navbar() {
           }`}
         >
           Endorsements
-        </Link>
-        
-        <Link
-          to="/matches"
-          className={`flex items-center gap-1.5 border-b-2 py-2 md:py-5 font-bold whitespace-nowrap ${
-            isActive("/matches")
-              ? "border-purple-600 text-purple-600"
-              : "border-transparent text-slate-500 hover:text-slate-900"
-          }`}
-        >
-          Matches
         </Link>
       </div>
 
@@ -206,6 +184,7 @@ function App() {
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/community" element={<Community />} />
             <Route path="/matches" element={<SmartMatches />} />
+            <Route path="/sessions" element={<Sessions />} />
             <Route path="/session/:sessionId" element={<SessionRoom />} />
           </Routes>
         </main>
