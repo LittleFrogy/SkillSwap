@@ -11,6 +11,7 @@ import Inbox from './pages/Inbox';
 import Community from './pages/Community';
 import SmartMatches from './pages/SmartMatches';
 import SkillCredits from './pages/SkillCredits';
+import SessionRoom from './pages/SessionRoom';
 import { Bell, User, Coins } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -205,6 +206,7 @@ function App() {
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/community" element={<Community />} />
             <Route path="/matches" element={<SmartMatches />} />
+            <Route path="/session/:sessionId" element={<SessionRoom />} />
           </Routes>
         </main>
       </div>

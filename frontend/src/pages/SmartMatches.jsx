@@ -11,6 +11,17 @@ export default function SmartMatches() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('discover'); // 'discover' | 'matched'
+  
+  // Schedule Modal State
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [scheduleForm, setScheduleForm] = useState({
+    skill: '',
+    scheduledTime: '',
+    notes: ''
+  });
+  const [isScheduling, setIsScheduling] = useState(false);
   
   // Filter States
   const [filterScore, setFilterScore] = useState(0);
@@ -75,6 +86,30 @@ export default function SmartMatches() {
   };
   const completeness = calculateCompleteness();
 
+  const handleScheduleSession = async (e) => {
+    e.preventDefault();
+    if (!selectedMatch) return;
+    setIsScheduling(true);
+    
+    try {
+      const res = await axios.post(`${API_URL}/api/sessions/schedule`, {
+        teacherId: selectedMatch.userId, // We can refine this later if they are the learner
+        learnerId: userId,
+        skill: scheduleForm.skill,
+        scheduledTime: scheduleForm.scheduledTime,
+        notes: scheduleForm.notes
+      });
+      alert('Session scheduled successfully! Calendar invite sent.');
+      setIsScheduleModalOpen(false);
+      setScheduleForm({ skill: '', scheduledTime: '', notes: '' });
+    } catch (err) {
+      console.error(err);
+      alert('Failed to schedule session.');
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
   // Extract unique skills from matches for the filter dropdown
   const uniqueSkills = Array.from(
     new Set(
@@ -84,6 +119,10 @@ export default function SmartMatches() {
 
   // Apply Filters and Sorting
   let filteredMatches = matches.filter(m => {
+    // Filter based on Active Tab
+    if (activeTab === 'discover' && m.matchStatus === 'accepted') return false;
+    if (activeTab === 'matched' && m.matchStatus !== 'accepted') return false;
+
     if (m.compatibilityScore < filterScore) return false;
     
     if (filterCategory !== 'All categories') {
@@ -161,9 +200,18 @@ export default function SmartMatches() {
 
         {/* Navigation Sidebar */}
         <nav className="space-y-1">
-          <Link to="/matches" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/matches') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
+          <button 
+            onClick={() => setActiveTab('discover')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${activeTab === 'discover' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}
+          >
             <Grid size={18} /> Smart matches
-          </Link>
+          </button>
+          <button 
+            onClick={() => setActiveTab('matched')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${activeTab === 'matched' ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}
+          >
+            <Users size={18} /> My Matches
+          </button>
           <Link to="/dashboard" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/dashboard') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
             <BookMarked size={18} /> My skill library
           </Link>
@@ -179,10 +227,14 @@ export default function SmartMatches() {
         {/* Header & Search */}
         <div>
           <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold uppercase tracking-wider mb-2">
-            <Sparkles size={14} /> Your Exchange Hub
+            <Sparkles size={14} /> {activeTab === 'discover' ? 'Your Exchange Hub' : 'Your Learning Partners'}
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 mb-1 tracking-tight">Find your next learning partner.</h1>
-          <p className="text-slate-500 mb-6">Handpicked connections based on what you can share and explore.</p>
+          <h1 className="text-3xl font-extrabold text-slate-900 mb-1 tracking-tight">
+            {activeTab === 'discover' ? 'Find your next learning partner.' : 'Your Active Connections'}
+          </h1>
+          <p className="text-slate-500 mb-6">
+            {activeTab === 'discover' ? 'Handpicked connections based on what you can share and explore.' : 'People you have successfully matched with for skill swapping.'}
+          </p>
           
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
@@ -352,16 +404,67 @@ export default function SmartMatches() {
                 match={match} 
                 onRequest={() => handleMatchRequest(match.userId)} 
                 onMessage={() => navigate(`/inbox?chatWith=${match.userId}`)} 
+                onSchedule={() => {
+                  setSelectedMatch(match);
+                  setScheduleForm({
+                    ...scheduleForm,
+                    skill: match.matchedSkills.theyCanTeachYou[0] || match.matchedSkills.youCanTeachThem[0] || ''
+                  });
+                  setIsScheduleModalOpen(true);
+                }}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* SCHEDULE SESSION MODAL */}
+      {isScheduleModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
+            <div className="p-6 md:p-8">
+              <h3 className="font-bold text-2xl text-slate-900 mb-6">Schedule Session</h3>
+              <form onSubmit={handleScheduleSession} className="space-y-4">
+                
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Partner</label>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3">
+                    <img src={selectedMatch?.user?.profilePicture || 'https://via.placeholder.com/40'} className="w-8 h-8 rounded-full" />
+                    <span className="font-semibold text-sm">{selectedMatch?.user?.fullName}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Topic / Skill</label>
+                  <input required type="text" value={scheduleForm.skill} onChange={e => setScheduleForm({...scheduleForm, skill: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300 outline-none text-sm focus:ring-2 focus:ring-blue-500" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Date & Time</label>
+                  <input required type="datetime-local" value={scheduleForm.scheduledTime} onChange={e => setScheduleForm({...scheduleForm, scheduledTime: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300 outline-none text-sm focus:ring-2 focus:ring-blue-500" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Agenda / Notes</label>
+                  <textarea rows="2" value={scheduleForm.notes} onChange={e => setScheduleForm({...scheduleForm, notes: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300 outline-none text-sm focus:ring-2 focus:ring-blue-500 resize-none" placeholder="What do you want to achieve?"></textarea>
+                </div>
+
+                <div className="pt-4 flex justify-end gap-3">
+                  <button type="button" onClick={() => setIsScheduleModalOpen(false)} className="px-5 py-2 text-slate-600 font-semibold hover:bg-slate-100 rounded-xl text-sm transition-colors">Cancel</button>
+                  <button type="submit" disabled={isScheduling} className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold rounded-xl text-sm shadow-md hover:opacity-95 disabled:opacity-70 transition-all">
+                    {isScheduling ? 'Scheduling...' : 'Send Invite'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function HorizontalMatchCard({ match, onRequest, onMessage }) {
+function HorizontalMatchCard({ match, onRequest, onMessage, onSchedule }) {
   const { user, compatibilityScore, matchedSkills, matchStatus } = match;
   
   const radius = 22;
@@ -482,8 +585,11 @@ function HorizontalMatchCard({ match, onRequest, onMessage }) {
         )}
 
         {matchStatus === 'accepted' && (
-          <button disabled className="px-5 py-2 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold border border-emerald-200 shadow-sm">
-            Matched!
+          <button 
+            onClick={onSchedule}
+            className="px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-full text-xs font-bold shadow-md hover:shadow-lg transition-all border border-transparent"
+          >
+            Schedule Session
           </button>
         )}
       </div>
