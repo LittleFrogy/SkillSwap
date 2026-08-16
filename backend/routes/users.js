@@ -31,11 +31,16 @@ router.get('/:id', async (req, res) => {
 
 // Update User Profile
 router.put('/:id', async (req, res) => {
-    const { fullName, jobTitle, tagline, location, bio, profilePicture } = req.body;
+    const { fullName, username, jobTitle, tagline, location, bio, profilePicture } = req.body;
     try {
+        const updateData = { fullName, jobTitle, tagline, location, bio, profilePicture };
+        if (username) {
+            updateData.username = username;
+        }
+
         const user = await User.findByIdAndUpdate(
             req.params.id,
-            { $set: { fullName, jobTitle, tagline, location, bio, profilePicture } },
+            { $set: updateData },
             { new: true, runValidators: true }
         ).select('-password');
 
@@ -44,6 +49,9 @@ router.put('/:id', async (req, res) => {
         }
         res.json(user);
     } catch (err) {
+        if (err.code === 11000 && err.keyPattern && err.keyPattern.username) {
+            return res.status(400).json({ message: "Username is already taken" });
+        }
         res.status(500).json({ message: "Server error", error: err.message });
     }
 });

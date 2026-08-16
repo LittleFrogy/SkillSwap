@@ -15,6 +15,7 @@ export default function Settings() {
   
   const [formData, setFormData] = useState({
     fullName: '',
+    username: '',
     jobTitle: '',
     tagline: '',
     location: '',
@@ -35,6 +36,7 @@ export default function Settings() {
       const res = await axios.get(`${API_URL}/${userId}`);
       setFormData({
         fullName: res.data.fullName || '',
+        username: res.data.username || '',
         jobTitle: res.data.jobTitle || '',
         tagline: res.data.tagline || '',
         location: res.data.location || '',
@@ -74,7 +76,11 @@ export default function Settings() {
       navigate('/dashboard'); // Go back to dashboard after saving
     } catch (err) {
       console.error(err);
-      setError('Failed to update profile.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to update profile.');
+      }
     } finally {
       setSaving(false);
     }
@@ -141,9 +147,18 @@ export default function Settings() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-800 mb-2">Full Name</label>
-            <input required type="text" className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-slate-800 mb-2">Full Name</label>
+              <input required type="text" className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-800 mb-2">Username</label>
+              <div className="relative">
+                <span className="absolute left-3 top-3 text-slate-400 font-semibold">@</span>
+                <input required type="text" className="w-full p-3 pl-8 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none lowercase" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')})} />
+              </div>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
