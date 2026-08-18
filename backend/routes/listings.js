@@ -70,6 +70,50 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/listings/user/:userId
+router.get('/user/:userId', async (req, res) => {
+  try {
+    if (isConnected()) {
+      const listings = await Listing.find({ userId: req.params.userId }).sort({ createdAt: -1 });
+      return res.json(listings);
+    }
+    const results = mockListings.filter(l => l.userId === req.params.userId);
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/listings/user/:userId/:type
+router.get('/user/:userId/:type', async (req, res) => {
+  try {
+    if (isConnected()) {
+      const listings = await Listing.find({ userId: req.params.userId, type: req.params.type }).sort({ createdAt: -1 });
+      return res.json(listings);
+    }
+    const results = mockListings.filter(l => l.userId === req.params.userId && l.type === req.params.type);
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/listings/:id
+router.get('/:id', async (req, res) => {
+  try {
+    if (isConnected()) {
+      const listing = await Listing.findById(req.params.id);
+      if (!listing) return res.status(404).json({ message: 'Listing not found' });
+      return res.json(listing);
+    }
+    const listing = mockListings.find(l => l._id === req.params.id);
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+    res.json(listing);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // POST /api/listings
 router.post('/', async (req, res) => {
   try {
@@ -97,12 +141,31 @@ router.post('/', async (req, res) => {
 // PUT /api/listings/:id
 router.put('/:id', async (req, res) => {
   try {
+    const requestUserId = req.body.userId; // Owner check requirement
+    if (!requestUserId) {
+      return res.status(400).json({ message: 'userId is required in the body to verify ownership' });
+    }
+
     if (isConnected()) {
+      const listing = await Listing.findById(req.params.id);
+      if (!listing) return res.status(404).json({ message: 'Listing not found' });
+      
+      // Owner-only check
+      if (listing.userId.toString() !== requestUserId) {
+        return res.status(403).json({ message: 'Forbidden: You do not own this listing' });
+      }
+
       const updated = await Listing.findByIdAndUpdate(req.params.id, req.body, { new: true });
       return res.json(updated);
     }
+    
     const idx = mockListings.findIndex(l => l._id === req.params.id);
     if (idx === -1) return res.status(404).json({ message: 'Listing not found' });
+    
+    if (mockListings[idx].userId !== requestUserId) {
+      return res.status(403).json({ message: 'Forbidden: You do not own this listing' });
+    }
+
     mockListings[idx] = { ...mockListings[idx], ...req.body };
     res.json(mockListings[idx]);
   } catch (err) {
@@ -113,10 +176,30 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/listings/:id
 router.delete('/:id', async (req, res) => {
   try {
+    const requestUserId = req.body.userId; // Owner check requirement
+    if (!requestUserId) {
+      return res.status(400).json({ message: 'userId is required in the body to verify ownership' });
+    }
+
     if (isConnected()) {
+      const listing = await Listing.findById(req.params.id);
+      if (!listing) return res.status(404).json({ message: 'Listing not found' });
+      
+      // Owner-only check
+      if (listing.userId.toString() !== requestUserId) {
+        return res.status(403).json({ message: 'Forbidden: You do not own this listing' });
+      }
+
       await Listing.findByIdAndDelete(req.params.id);
       return res.json({ message: 'Listing deleted' });
     }
+    
+    const listing = mockListings.find(l => l._id === req.params.id);
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+    if (listing.userId !== requestUserId) {
+      return res.status(403).json({ message: 'Forbidden: You do not own this listing' });
+    }
+
     mockListings = mockListings.filter(l => l._id !== req.params.id);
     res.json({ message: 'Listing deleted' });
   } catch (err) {

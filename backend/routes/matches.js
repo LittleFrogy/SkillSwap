@@ -7,18 +7,18 @@ const MatchRequest = require('../models/MatchRequest');
 router.get('/', async (req, res) => {
   try {
     const { userId } = req.query;
-    
+
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required for smart matching.' });
     }
 
-    // 1. Fetch current user's listings to understand their needs/offerings
+    //Fetch current user's listings to understand their needs/offerings
     const myListings = await Listing.find({ userId });
-    
+
     const myLearnSkills = myListings.filter(l => l.type === 'learn').map(l => l.skill.toLowerCase());
     const myTeachSkills = myListings.filter(l => l.type === 'teach').map(l => l.skill.toLowerCase());
 
-    // 2. Fetch all OTHER users' listings
+    //Fetch all OTHER users' listings
     const otherListings = await Listing.find({ userId: { $ne: userId } });
 
     const usersMap = {};
@@ -47,17 +47,17 @@ router.get('/', async (req, res) => {
 
     const matches = [];
 
-    // 3. Calculate compatibility scores
+    //Calculate compatibility scores
     for (const otherUserId in usersMap) {
       const otherUser = usersMap[otherUserId];
-      
+
       let score = 0;
       let matchedSkills = {
         theyCanTeachYou: [],
         youCanTeachThem: []
       };
 
-      // Check if they teach what I want to learn
+      //Check if they teach what I want to learn
       otherUser.teaches.forEach(skill => {
         if (myLearnSkills.includes(skill)) {
           score += 40; // Base score for finding a teacher
@@ -65,20 +65,20 @@ router.get('/', async (req, res) => {
         }
       });
 
-      // Check if I teach what they want to learn
+      //Check if I teach what they want to learn
       otherUser.learns.forEach(skill => {
         if (myTeachSkills.includes(skill)) {
-          score += 40; // Base score for finding a student
+          score += 40; //Base score for finding a student
           matchedSkills.youCanTeachThem.push(skill);
         }
       });
 
-      // Mutual Value Bonus! (Holy Grail of Skill Swapping)
+      // Mutual Value Bonus
       if (matchedSkills.theyCanTeachYou.length > 0 && matchedSkills.youCanTeachThem.length > 0) {
         score += 20;
       }
 
-      // Cap score at 100
+      //Cap score at 100
       score = Math.min(score, 100);
 
       matches.push({
@@ -91,23 +91,23 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // Sort by highest compatibility score first
+    //Sort by highest compatibility score first
     matches.sort((a, b) => b.compatibilityScore - a.compatibilityScore);
 
-    // Fetch all match requests involving this user
+    //Fetch all match requests involving this user
     const matchRequests = await MatchRequest.find({
       $or: [{ fromUserId: userId }, { toUserId: userId }]
     });
 
-    // 4. Attach user profile data and match request status to the matches for the UI
+    //Attach user profile data and match request status to the matches for the UI
     const populatedMatches = await Promise.all(
       matches.map(async (match) => {
         const userProfile = await User.findById(match.userId).select('fullName jobTitle profilePicture tagline');
-        
+
         let requestStatus = 'none';
         const existingRequest = matchRequests.find(
-          req => (req.fromUserId === userId && req.toUserId === match.userId) || 
-                 (req.fromUserId === match.userId && req.toUserId === userId)
+          req => (req.fromUserId === userId && req.toUserId === match.userId) ||
+            (req.fromUserId === match.userId && req.toUserId === userId)
         );
 
         if (existingRequest) {
@@ -133,7 +133,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Send a match request
+//Send a match request
 router.post('/request', async (req, res) => {
   try {
     const { fromUserId, toUserId } = req.body;
@@ -162,15 +162,15 @@ router.post('/request', async (req, res) => {
   }
 });
 
-// Get incoming pending requests for a user
+//Get incoming pending requests for a user
 router.get('/requests/pending', async (req, res) => {
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ message: 'User ID required' });
 
     const requests = await MatchRequest.find({ toUserId: userId, status: 'pending' });
-    
-    // Populate user details for each request
+
+    //Populate user details for each request
     const populatedRequests = await Promise.all(
       requests.map(async (request) => {
         const userProfile = await User.findById(request.fromUserId).select('fullName jobTitle profilePicture tagline');
@@ -189,7 +189,7 @@ router.get('/requests/pending', async (req, res) => {
   }
 });
 
-// Respond to a match request
+//Respond to a match request
 router.put('/respond', async (req, res) => {
   try {
     const { requestId, status } = req.body;
