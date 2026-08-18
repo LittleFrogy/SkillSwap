@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: skillswap-backend
+    env: node
+    # Using explicit cd commands to guarantee it finds the package.json in the backend folder
+    buildCommand: "cd backend && npm install"
+    startCommand: "cd backend && node server.js"
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: MONGO_URI
+        sync: false
