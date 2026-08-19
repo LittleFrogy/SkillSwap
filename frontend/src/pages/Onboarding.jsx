@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BookOpen, GraduationCap, CheckCircle, Plus, Trash2, ArrowRight } from 'lucide-react';
 
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings`;
+const API_URL = `${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '')}/api/listings`;
 
 export default function Onboarding() {
   const [step, setStep] = useState(1);
