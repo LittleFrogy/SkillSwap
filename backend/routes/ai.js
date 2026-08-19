@@ -117,9 +117,26 @@ Rules:
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro', generationConfig: { temperature: 0.85, maxOutputTokens: 1024 } });
+    const modelsToTry = ['gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-2.5-flash'];
+    let result = null;
+    let lastError = null;
 
-    const result = await model.generateContent(prompt);
+    for (const modelName of modelsToTry) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName, generationConfig: { responseMimeType: "application/json", temperature: 0.85, maxOutputTokens: 1024 } });
+        result = await model.generateContent(prompt);
+        break; // Success!
+      } catch (err) {
+        lastError = err;
+        if (!err.message?.includes("404") && !err.message?.includes("403")) {
+          throw err; // Throw if it's a structural error (not availability)
+        }
+      }
+    }
+
+    if (!result) {
+      throw new Error("No accessible models found. " + (lastError?.message || ""));
+    }
     const raw = result.response.text();
     if (!raw) throw new Error("Gemini returned an empty response.");
 
