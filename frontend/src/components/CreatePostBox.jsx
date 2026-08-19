@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import axios from "axios";
-import { BiImageAdd } from "react-icons/bi";
+import { Image, X } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -11,11 +11,14 @@ export default function CreatePostBox({ onPostCreated }) {
 
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
+  const [focused, setFocused] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const fileRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!content.trim() && !image) return;
+    setPosting(true);
 
     let base64Image = "";
     if (image) {
@@ -28,73 +31,100 @@ export default function CreatePostBox({ onPostCreated }) {
     }
 
     try {
-      await axios.post(
-        `${API_URL}/api/posts`,
-        {
-          authorName: CURRENT_USER,
-          authorRole: CURRENT_ROLE,
-          content,
-          image: base64Image
-        }
-      );
-
+      await axios.post(`${API_URL}/api/posts`, {
+        authorName: CURRENT_USER,
+        authorRole: CURRENT_ROLE,
+        content,
+        image: base64Image,
+      });
       setContent("");
       setImage(null);
-
+      setFocused(false);
       onPostCreated();
     } catch (err) {
       console.error(err);
+    } finally {
+      setPosting(false);
     }
   };
 
-  return (
-    <div className="bg-white rounded-xl shadow border border-gray-200 p-4 mb-5">
-      <form onSubmit={handleSubmit}>
-        {/* Text Box */}
-        <textarea
-          rows="2"
-          placeholder="Share a skill, tip or question..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="w-full resize-none border-none outline-none text-gray-800 placeholder-gray-400 text-sm"
-        />
+  const canPost = content.trim() || image;
 
-        {/* Selected Image */}
+  return (
+    <div
+      className={`bg-white rounded-2xl border transition-all duration-200 ${
+        focused
+          ? "border-blue-200 shadow-md shadow-blue-50"
+          : "border-gray-100 shadow-sm"
+      }`}
+    >
+      <form onSubmit={handleSubmit}>
+        {/* Top row: avatar + input */}
+        <div className="flex items-start gap-3 p-4">
+          {/* Avatar */}
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-violet-500 flex items-center justify-center text-white font-bold text-sm shrink-0 mt-0.5 shadow-sm">
+            {CURRENT_USER.charAt(0).toUpperCase()}
+          </div>
+
+          {/* Textarea */}
+          <textarea
+            rows={focused ? 3 : 2}
+            placeholder="Share a skill, tip or question…"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onFocus={() => setFocused(true)}
+            className="flex-1 resize-none border-none outline-none text-gray-800 placeholder-gray-400 text-sm leading-relaxed bg-transparent pt-1"
+          />
+        </div>
+
+        {/* Image preview */}
         {image && (
-          <div className="mt-2">
+          <div className="relative mx-4 mb-3">
             <img
               src={URL.createObjectURL(image)}
               alt="Preview"
-              className="w-full max-h-56 object-cover rounded-lg"
+              className="w-full max-h-48 object-cover rounded-xl"
             />
+            <button
+              type="button"
+              onClick={() => setImage(null)}
+              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center transition"
+            >
+              <X size={12} className="text-white" />
+            </button>
           </div>
         )}
 
-        {/* Bottom Bar */}
-        <div className="flex justify-between items-center mt-3 border-t pt-3">
-          <label
-            htmlFor="imageInput"
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 cursor-pointer font-medium text-sm"
-          >
-            <BiImageAdd size={22} />
-            <span>Add Photo</span>
-          </label>
+        {/* Bottom bar — only visible when focused or has content */}
+        {(focused || canPost) && (
+          <div className="flex items-center justify-between px-4 pb-3 pt-0 border-t border-gray-100 mt-0">
+            {/* Photo */}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex items-center gap-1.5 text-gray-400 hover:text-blue-600 transition text-xs font-medium py-1 px-2 rounded-lg hover:bg-blue-50"
+            >
+              <Image size={15} />
+              <span>Photo</span>
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => setImage(e.target.files[0])}
+            />
 
-          <input
-            id="imageInput"
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => setImage(e.target.files[0])}
-          />
-
-          <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold text-sm transition"
-          >
-            Post
-          </button>
-        </div>
+            {/* Post button */}
+            <button
+              type="submit"
+              disabled={!canPost || posting}
+              className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white px-5 py-1.5 rounded-full text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            >
+              {posting ? "Posting…" : "Post"}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );
