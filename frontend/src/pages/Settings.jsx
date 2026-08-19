@@ -20,7 +20,8 @@ export default function Settings() {
     tagline: '',
     location: '',
     bio: '',
-    profilePicture: ''
+    profilePicture: '',
+    preferredLanguage: 'en'
   });
 
   useEffect(() => {
@@ -41,7 +42,8 @@ export default function Settings() {
         tagline: res.data.tagline || '',
         location: res.data.location || '',
         bio: res.data.bio || '',
-        profilePicture: res.data.profilePicture || ''
+        profilePicture: res.data.profilePicture || '',
+        preferredLanguage: res.data.preferredLanguage || 'en'
       });
     } catch (err) {
       console.error(err);
@@ -175,6 +177,42 @@ export default function Settings() {
           <div>
             <label className="block text-sm font-semibold text-slate-800 mb-2">Location</label>
             <input type="text" placeholder="e.g. Brooklyn, New York" className="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-800 mb-2">
+              Preferred Chat Language
+            </label>
+
+            <select
+              value={formData.preferredLanguage}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  preferredLanguage: e.target.value
+                })
+              }
+              className="w-full p-3 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="en">English</option>
+              <option value="bn">Bangla</option>
+              <option value="hi">Hindi</option>
+              <option value="es">Spanish</option>
+              <option value="fr">French</option>
+              <option value="de">German</option>
+              <option value="ar">Arabic</option>
+              <option value="pt">Portuguese</option>
+              <option value="it">Italian</option>
+              <option value="tr">Turkish</option>
+              <option value="ur">Urdu</option>
+              <option value="zh-CN">Chinese (Simplified)</option>
+              <option value="ja">Japanese</option>
+              <option value="ko">Korean</option>
+            </select>
+
+            <p className="mt-2 text-xs text-slate-500">
+              Incoming chat messages can be translated into this language.
+            </p>
           </div>
 
           <div>

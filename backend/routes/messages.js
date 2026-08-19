@@ -4,6 +4,83 @@ const Message = require("../models/Message");
 
 const router = express.Router();
 
+// Get unread message count from one sender to one receiver
+router.get("/unread/:senderId/:receiverId", async (request, response) => {
+  try {
+    const { senderId, receiverId } = request.params;
+
+    if (
+      !mongoose.Types.ObjectId.isValid(senderId) ||
+      !mongoose.Types.ObjectId.isValid(receiverId)
+    ) {
+      return response.status(400).json({
+        message: "Invalid sender or receiver ID.",
+      });
+    }
+
+    const unreadCount = await Message.countDocuments({
+      senderId,
+      receiverId,
+      isRead: false,
+    });
+
+    response.json({
+      unreadCount,
+    });
+  } catch (error) {
+    response.status(500).json({
+      message: "Failed to load unread count.",
+      error: error.message,
+    });
+  }
+});
+
+module.exports = router;
+
+// Mark messages as read
+router.patch("/read/:senderId/:receiverId", async (request, response) => {
+  try {
+    const { senderId, receiverId } = request.params;
+
+    if (
+      !mongoose.Types.ObjectId.isValid(senderId) ||
+      !mongoose.Types.ObjectId.isValid(receiverId)
+    ) {
+      return response.status(400).json({
+        message: "Invalid sender or receiver ID.",
+      });
+    }
+
+    await Message.updateMany(
+      {
+        senderId,
+        receiverId,
+        isRead: false,
+      },
+      {
+        $set: { isRead: true },
+      }
+    );
+
+    const io = request.app.get("io");
+
+    if (io) {
+      io.to(senderId).emit("messagesRead", {
+        readerId: receiverId,
+      });
+    }
+
+    response.json({
+      message: "Messages marked as read.",
+    });
+  } catch (error) {
+    response.status(500).json({
+      message: "Failed to mark messages as read.",
+      error: error.message,
+    });
+  }
+});
+
 // Create a message
 router.post("/", async (request, response) => {
   try {
@@ -27,6 +104,56 @@ router.post("/", async (request, response) => {
       });
     }
 
+    if (hasAttachment) {
+      const allowedExtensions = [
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".txt",
+
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+
+        ".mp3",
+        ".wav",
+        ".m4a",
+        ".ogg",
+        ".webm",
+
+      ];
+      const fileName = (attachment.name || "").toLowerCase();
+
+      const isAllowedFile = allowedExtensions.some((extension) =>
+        fileName.endsWith(extension)
+      );
+
+      if (!isAllowedFile) {
+        return response.status(400).json({
+          message:
+            "File type not allowed. Only documents, images, and audio files are accepted.",
+        });
+      }
+
+      const base64Data = attachment.data.split(",")[1];
+
+      if (!base64Data) {
+        return response.status(400).json({
+          message: "Invalid attachment data.",
+        });
+      }
+
+      const fileSizeInBytes = Buffer.byteLength(base64Data, "base64");
+      const maxFileSize = 5 * 1024 * 1024;
+
+      if (fileSizeInBytes > maxFileSize) {
+        return response.status(400).json({
+          message: "Attachment is too large. Maximum allowed size is 5 MB.",
+        });
+      }
+    }
+
     const newMessage = await Message.create({
       senderId,
       receiverId,
@@ -39,6 +166,13 @@ router.post("/", async (request, response) => {
           }
         : undefined,
     });
+
+    // Send the new message instantly to the receiver
+    const io = request.app.get("io");
+
+    if (io) {
+      io.to(receiverId).emit("receiveMessage", newMessage);
+    }
 
     response.status(201).json(newMessage);
   } catch (error) {

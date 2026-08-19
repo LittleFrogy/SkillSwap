@@ -175,34 +175,52 @@ function Navbar() {
   );
 }
 
+function AppContent() {
+  const location = useLocation();
+  const isInbox = location.pathname === "/inbox";
+
+  return (
+    <div
+      className={
+        isInbox
+          ? "flex h-dvh flex-col overflow-hidden bg-[#f9fafb] font-sans text-[#000000e6]"
+          : "min-h-screen bg-[#f9fafb] font-sans text-[#000000e6]"
+      }
+    >
+      <Navbar />
+
+      <main
+        className={
+          isInbox
+            ? "min-h-0 flex-1 w-full overflow-hidden"
+            : "w-full px-4 py-8 md:px-6"
+        }
+      >
+        <Routes>
+          <Route path="/" element={<Navigate to="/signin" replace />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/signin" element={<Signin />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/credits" element={<SkillCredits />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/endorsements" element={<Endorsements />} />
+          <Route path="/inbox" element={<Inbox />} />
+          <Route path="/community" element={<Community />} />
+          <Route path="/matches" element={<SmartMatches />} />
+          <Route path="/sessions" element={<Sessions />} />
+          <Route path="/session/:sessionId" element={<SessionRoom />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#f9fafb] font-sans text-[#000000e6]">
-        <Navbar />
-
-        <main className="mx-auto max-w-[1200px] w-full px-4 md:px-6 py-8 overflow-x-hidden">
-          <Routes>
-            <Route
-              path="/"
-              element={<Navigate to="/signin" replace />}
-            />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/signin" element={<Signin />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/credits" element={<SkillCredits />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/endorsements" element={<Endorsements />} />
-            <Route path="/inbox" element={<Inbox />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/matches" element={<SmartMatches />} />
-            <Route path="/sessions" element={<Sessions />} />
-            <Route path="/session/:sessionId" element={<SessionRoom />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-          </Routes>
-        </main>
-      </div>
+      <AppContent />
     </Router>
   );
 }

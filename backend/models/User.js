@@ -56,6 +56,10 @@ const userSchema = new mongoose.Schema({
       }
     ],
     default: []
+  },
+  preferredLanguage: {
+    type: String,
+    default: "en"
   }
 }, { timestamps: true });
 
