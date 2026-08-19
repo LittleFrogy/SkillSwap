@@ -1,5 +1,9 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const dns = require("dns");
+
+// Workaround for Node 17+ IPv6 DNS resolution issues with MongoDB Atlas SRV
+dns.setDefaultResultOrder('ipv4first');
 const path = require("path");
 
 const cors = require("cors");

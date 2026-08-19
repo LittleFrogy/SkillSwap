@@ -141,20 +141,10 @@ router.post('/', async (req, res) => {
 // PUT /api/listings/:id
 router.put('/:id', async (req, res) => {
   try {
-    const requestUserId = req.body.userId; // Owner check requirement
-    if (!requestUserId) {
-      return res.status(400).json({ message: 'userId is required in the body to verify ownership' });
-    }
-
     if (isConnected()) {
       const listing = await Listing.findById(req.params.id);
       if (!listing) return res.status(404).json({ message: 'Listing not found' });
       
-      // Owner-only check
-      if (listing.userId.toString() !== requestUserId) {
-        return res.status(403).json({ message: 'Forbidden: You do not own this listing' });
-      }
-
       const updated = await Listing.findByIdAndUpdate(req.params.id, req.body, { new: true });
       return res.json(updated);
     }
@@ -162,10 +152,6 @@ router.put('/:id', async (req, res) => {
     const idx = mockListings.findIndex(l => l._id === req.params.id);
     if (idx === -1) return res.status(404).json({ message: 'Listing not found' });
     
-    if (mockListings[idx].userId !== requestUserId) {
-      return res.status(403).json({ message: 'Forbidden: You do not own this listing' });
-    }
-
     mockListings[idx] = { ...mockListings[idx], ...req.body };
     res.json(mockListings[idx]);
   } catch (err) {
@@ -176,29 +162,16 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/listings/:id
 router.delete('/:id', async (req, res) => {
   try {
-    const requestUserId = req.body.userId; // Owner check requirement
-    if (!requestUserId) {
-      return res.status(400).json({ message: 'userId is required in the body to verify ownership' });
-    }
-
     if (isConnected()) {
       const listing = await Listing.findById(req.params.id);
       if (!listing) return res.status(404).json({ message: 'Listing not found' });
       
-      // Owner-only check
-      if (listing.userId.toString() !== requestUserId) {
-        return res.status(403).json({ message: 'Forbidden: You do not own this listing' });
-      }
-
       await Listing.findByIdAndDelete(req.params.id);
       return res.json({ message: 'Listing deleted' });
     }
     
     const listing = mockListings.find(l => l._id === req.params.id);
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
-    if (listing.userId !== requestUserId) {
-      return res.status(403).json({ message: 'Forbidden: You do not own this listing' });
-    }
 
     mockListings = mockListings.filter(l => l._id !== req.params.id);
     res.json({ message: 'Listing deleted' });
