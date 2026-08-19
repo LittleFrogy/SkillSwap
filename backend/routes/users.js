@@ -31,9 +31,18 @@ router.get('/:id', async (req, res) => {
 
 // Update User Profile
 router.put('/:id', async (req, res) => {
-    const { fullName, username, jobTitle, tagline, location, bio, profilePicture } = req.body;
+    const {
+        fullName,
+        username,
+        jobTitle,
+        tagline,
+        location,
+        bio,
+        profilePicture,
+        preferredLanguage
+    } = req.body;
     try {
-        const updateData = { fullName, jobTitle, tagline, location, bio, profilePicture };
+        const updateData = { fullName, jobTitle, tagline, location, bio, profilePicture, preferredLanguage };
         if (username) {
             updateData.username = username;
         }

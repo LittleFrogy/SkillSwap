@@ -21,7 +21,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\\/$/, "");
 const CREDITS_API = `${BASE_URL}/api/credits`;
 
 export default function SkillCredits() {
@@ -469,15 +469,13 @@ export default function SkillCredits() {
                     onChange={(e) => {
                       const selected = completedSessions.find(s => s._id === e.target.value);
                       if (selected) {
-                        const isTeacher = selected.teacherId._id === userId;
-                        const partner = isTeacher ? selected.learnerId : selected.teacherId;
                         setExchangeForm({ 
                           ...exchangeForm, 
                           sessionId: selected._id,
-                          partnerUserId: partner._id,
-                          partnerName: partner.fullName,
+                          partnerUserId: selected.partnerUserId,
+                          partnerName: selected.partnerName,
                           skill: selected.skill,
-                          role: isTeacher ? 'teacher' : 'learner'
+                          role: selected.role
                         });
                       }
                     }}
@@ -485,13 +483,11 @@ export default function SkillCredits() {
                   >
                     <option value="" disabled>Select a completed session...</option>
                     {completedSessions.map(session => {
-                      const isTeacher = session.teacherId._id === userId;
-                      const partner = isTeacher ? session.learnerId : session.teacherId;
-                      const dateObj = new Date(session.scheduledTime);
+                      const dateObj = new Date(session.completedAt);
                       const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
                       return (
                         <option key={session._id} value={session._id}>
-                          {partner.fullName} - {session.skill} ({dateStr})
+                          {session.partnerName} - {session.skill} ({dateStr})
                         </option>
                       );
                     })}

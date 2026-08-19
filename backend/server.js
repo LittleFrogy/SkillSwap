@@ -1,6 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
 
 const cors = require("cors");
 require("dotenv").config();
@@ -18,8 +20,64 @@ const sessionRoutes = require("./routes/sessions");
 const leaderboardRoutes = require("./routes/leaderboard");
 const aiRoutes = require("./routes/ai");
 const githubRoutes = require("./routes/github");
+const translateRoutes = require("./routes/translate");
+const notificationRoutes = require("./routes/notifications");
+const { startSessionReminderScheduler } = require("./utils/sessionReminderScheduler");
+const { startWeeklyDigestScheduler } = require("./utils/weeklyDigestScheduler");
 
 const app = express();
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  },
+});
+
+app.set("io", io);
+
+const onlineUsers = new Map();
+
+io.on("connection", (socket) => {
+  console.log("🟢 User connected:", socket.id);
+
+  socket.on("joinUser", (userId) => {
+    socket.join(userId);
+
+    onlineUsers.set(userId, socket.id);
+
+    io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+
+    console.log(`👤 User ${userId} joined their room`);
+  });
+
+  socket.on("typing", ({ senderId, receiverId }) => {
+    io.to(receiverId).emit("typing", {
+      senderId,
+    });
+  });
+
+  socket.on("stopTyping", ({ senderId, receiverId }) => {
+    io.to(receiverId).emit("stopTyping", {
+      senderId,
+    });
+  });
+
+  socket.on("disconnect", () => {
+    for (const [userId, socketId] of onlineUsers.entries()) {
+      if (socketId === socket.id) {
+        onlineUsers.delete(userId);
+        break;
+      }
+    }
+
+    io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+
+    console.log("🔴 User disconnected:", socket.id);
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
@@ -40,6 +98,8 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/github", githubRoutes);
+app.use("/api/translate", translateRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Connect to the shared MongoDB database
 if (process.env.MONGO_URI) {
@@ -60,6 +120,8 @@ app.get("/", (request, response) => {
   response.send("SkillSwap API is running");
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  startSessionReminderScheduler();
+  startWeeklyDigestScheduler();
 });

@@ -97,10 +97,6 @@ router.post('/schedule', async (req, res) => {
               dateTime: endTime.toISOString(),
               timeZone: 'UTC',
             },
-            attendees: [
-              { email: teacherUser.email },
-              { email: learnerUser.email }
-            ],
             reminders: {
               useDefault: false,
               overrides: [
@@ -112,8 +108,7 @@ router.post('/schedule', async (req, res) => {
 
           const calendarResponse = await calendar.events.insert({
             calendarId: 'primary',
-            resource: event,
-            sendUpdates: 'all' // Sends the email invitation to users
+            resource: event
           });
 
           googleEventId = calendarResponse.data.id;

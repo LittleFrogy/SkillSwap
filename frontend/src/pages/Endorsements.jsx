@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Eye, EyeOff, Sparkles, ShieldCheck } from 'lucide-react';
 
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/endorsements`;
+const API_URL = `${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\\/$/, "")}/api/endorsements`;
 
 export default function Endorsements() {
   const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User, BadgeCheck, Coins, Video, Trophy, Award, Loader2, RefreshCw, ChevronRight, GitFork } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 const API_URL = `${BASE_URL}/api/listings`;
 const USER_API_URL = `${BASE_URL}/api/users`;
 
@@ -80,19 +80,31 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const [listingsRes, userRes, sessionsRes, skillsRes] = await Promise.all([
+      // Fetch user data first, as it's the most critical for the page
+      try {
+        const userRes = await axios.get(`${USER_API_URL}/${userId}`);
+        setUserData(userRes.data);
+      } catch (err) {
+        console.error("Failed to load user data:", err);
+      }
+
+      // Fetch other data in parallel but handle errors independently
+      const [listingsRes, sessionsRes, skillsRes] = await Promise.allSettled([
         axios.get(`${API_URL}?userId=${userId}`),
-        axios.get(`${USER_API_URL}/${userId}`),
         axios.get(`${BASE_URL}/api/endorsements/sessions?userId=${userId}`),
         axios.get(`${API_URL}/skills/unique`)
       ]);
-      setListings(listingsRes.data);
-      setUserData(userRes.data);
-      setSessions(sessionsRes.data);
-      setUniqueSkills(skillsRes.data);
-      if (sessionsRes.data[0]) {
-        setSelectedSession(sessionsRes.data[0].sessionId);
-        setEndorsementForm((current) => ({ ...current, skill: sessionsRes.data[0].skill }));
+
+      if (listingsRes.status === 'fulfilled') setListings(listingsRes.value.data);
+      if (skillsRes.status === 'fulfilled') setUniqueSkills(skillsRes.value.data);
+      
+      if (sessionsRes.status === 'fulfilled') {
+        const sessionData = sessionsRes.value.data;
+        setSessions(sessionData);
+        if (sessionData[0]) {
+          setSelectedSession(sessionData[0].sessionId);
+          setEndorsementForm((current) => ({ ...current, skill: sessionData[0].skill }));
+        }
       }
     } catch (err) {
       console.error(err);

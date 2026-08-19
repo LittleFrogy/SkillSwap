@@ -21,7 +21,9 @@
     "form-data": "^4.0.6",
     "googleapis": "^174.0.1",
     "mongoose": "^9.9.1",
-    "multer": "^2.2.0"
+    "multer": "^2.2.0",
+    "node-cron": "^4.6.0",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

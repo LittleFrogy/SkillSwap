@@ -100,10 +100,12 @@ router.get('/', async (req, res) => {
     });
 
     // 4. Attach user profile data and match request status to the matches for the UI
-    const populatedMatches = await Promise.all(
+    const populatedMatches = (await Promise.all(
       matches.map(async (match) => {
         const userProfile = await User.findById(match.userId).select('fullName jobTitle profilePicture tagline');
         
+        if (!userProfile) return null; // Orphaned user check
+
         let requestStatus = 'none';
         const existingRequest = matchRequests.find(
           req => (req.fromUserId === userId && req.toUserId === match.userId) || 
@@ -123,7 +125,7 @@ router.get('/', async (req, res) => {
           matchStatus: requestStatus
         };
       })
-    );
+    )).filter(match => match !== null);
 
     res.status(200).json(populatedMatches);
 

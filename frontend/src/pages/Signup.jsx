@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, '');
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -77,8 +77,8 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
         <div className="text-center mb-8">
           <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-2xl mx-auto mb-4">S</div>
           <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Create an account</h2>

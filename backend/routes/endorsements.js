@@ -26,8 +26,8 @@ router.get('/sessions', async (req, res) => {
     .sort({ scheduledTime: -1 });
 
     const formattedSessions = sessions.map((session) => {
-      // Determine who the partner is
-      const isTeacher = session.teacherId._id.toString() === userId;
+      // Determine who the partner is, handling potential null populated users safely
+      const isTeacher = session.teacherId && session.teacherId._id.toString() === userId;
       const partner = isTeacher ? session.learnerId : session.teacherId;
       
       return {
@@ -37,7 +37,8 @@ router.get('/sessions', async (req, res) => {
         completedAt: session.scheduledTime, // Use scheduledTime as completedAt for now
         partnerUserId: partner ? partner._id : null,
         partnerName: partner ? partner.fullName : 'Unknown partner',
-        status: session.status
+        status: session.status,
+        role: isTeacher ? 'teacher' : 'learner'
       };
     });
 
