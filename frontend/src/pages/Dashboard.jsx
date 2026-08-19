@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User, BadgeCheck, Coins, Video, Trophy, Award, Loader2, RefreshCw, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User, BadgeCheck, Coins, Video, Trophy, Award, Loader2, RefreshCw, ChevronRight, GitFork } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -271,6 +271,9 @@ export default function Dashboard() {
           </Link>
           <Link to="/sessions" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/sessions') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
             <Video size={18} /> Sessions
+          </Link>
+          <Link to="/opensource" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/opensource') ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
+            <GitFork size={18} className={isActive('/opensource') ? 'text-emerald-600' : 'text-slate-400'} /> Open Source
           </Link>
           <Link to="/leaderboard" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/leaderboard') ? 'bg-amber-50 text-amber-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
             <Trophy size={18} className="text-amber-500" /> Leaderboard

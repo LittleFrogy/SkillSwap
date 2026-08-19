@@ -14,7 +14,8 @@ import SkillCredits from './pages/SkillCredits';
 import SessionRoom from './pages/SessionRoom';
 import Sessions from './pages/Sessions';
 import Leaderboard from './pages/Leaderboard';
-import { Bell, User, Trophy } from 'lucide-react';
+import OpenSource from './pages/OpenSource';
+import { Bell, User, Trophy, GitFork } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -133,6 +134,18 @@ function Navbar() {
           <Trophy size={14} className={isActive("/leaderboard") ? "text-amber-500" : "text-slate-400"} />
           Leaderboard
         </Link>
+
+        <Link
+          to="/opensource"
+          className={`flex items-center gap-1.5 border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
+            isActive("/opensource")
+              ? "border-emerald-500 text-emerald-600"
+              : "border-transparent text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          <GitFork size={14} className={isActive("/opensource") ? "text-emerald-500" : "text-slate-400"} />
+          Open Source
+        </Link>
       </div>
 
       {/* 3. Profile & Actions (Right) */}
@@ -200,6 +213,7 @@ function App() {
             <Route path="/sessions" element={<Sessions />} />
             <Route path="/session/:sessionId" element={<SessionRoom />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/opensource" element={<OpenSource />} />
           </Routes>
         </main>
       </div>

@@ -17,6 +17,7 @@ const creditRoutes = require("./routes/credits");
 const sessionRoutes = require("./routes/sessions");
 const leaderboardRoutes = require("./routes/leaderboard");
 const aiRoutes = require("./routes/ai");
+const githubRoutes = require("./routes/github");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -38,6 +39,7 @@ app.use("/api/credits", creditRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/github", githubRoutes);
 
 // Connect to the shared MongoDB database
 if (process.env.MONGO_URI) {
