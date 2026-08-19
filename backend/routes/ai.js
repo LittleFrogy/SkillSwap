@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -117,7 +117,7 @@ Rules:
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash', generationConfig: { responseMimeType: "application/json", temperature: 0.85, maxOutputTokens: 1024 } });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', generationConfig: { responseMimeType: "application/json", temperature: 0.85, maxOutputTokens: 1024 } });
 
     const result = await model.generateContent(prompt);
     const raw = result.response.text();
