@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Camera, User, Upload, LogOut } from 'lucide-react';
 
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users`;
+const API_URL = `${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '')}/api/users`;
 
 export default function Settings() {
   const navigate = useNavigate();

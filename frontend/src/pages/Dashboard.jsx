@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User, BadgeCheck, Coins, Video, Trophy, Award, Loader2, RefreshCw, ChevronRight } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 const API_URL = `${BASE_URL}/api/listings`;
 const USER_API_URL = `${BASE_URL}/api/users`;
 
