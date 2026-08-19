@@ -60,6 +60,10 @@ const userSchema = new mongoose.Schema({
   preferredLanguage: {
     type: String,
     default: "en"
+  },
+  oneSignalPlayerId: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

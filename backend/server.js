@@ -20,6 +20,9 @@ const sessionRoutes = require("./routes/sessions");
 const leaderboardRoutes = require("./routes/leaderboard");
 const aiRoutes = require("./routes/ai");
 const translateRoutes = require("./routes/translate");
+const notificationRoutes = require("./routes/notifications");
+const { startSessionReminderScheduler } = require("./utils/sessionReminderScheduler");
+const { startWeeklyDigestScheduler } = require("./utils/weeklyDigestScheduler");
 
 const app = express();
 const server = http.createServer(app);
@@ -94,6 +97,7 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/translate", translateRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Connect to the shared MongoDB database
 if (process.env.MONGO_URI) {
@@ -116,4 +120,6 @@ app.get("/", (request, response) => {
 
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  startSessionReminderScheduler();
+  startWeeklyDigestScheduler();
 });

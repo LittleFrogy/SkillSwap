@@ -15,6 +15,7 @@ import SessionRoom from './pages/SessionRoom';
 import Sessions from './pages/Sessions';
 import Leaderboard from './pages/Leaderboard';
 import { Bell, User, Trophy } from 'lucide-react';
+import { initPushNotifications } from './utils/pushNotifications';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -218,6 +219,11 @@ function AppContent() {
 }
 
 function App() {
+  useEffect(() => {
+    const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+    if (userId) initPushNotifications(userId);
+  }, []);
+
   return (
     <Router>
       <AppContent />
