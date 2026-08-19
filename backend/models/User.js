@@ -47,6 +47,15 @@ const userSchema = new mongoose.Schema({
   skillCredits: {
     type: Number,
     default: 5
+  },
+  badges: {
+    type: [
+      {
+        id: { type: String, required: true },
+        earnedAt: { type: Date, default: Date.now }
+      }
+    ],
+    default: []
   }
 }, { timestamps: true });
 

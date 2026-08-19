@@ -13,7 +13,8 @@ import SmartMatches from './pages/SmartMatches';
 import SkillCredits from './pages/SkillCredits';
 import SessionRoom from './pages/SessionRoom';
 import Sessions from './pages/Sessions';
-import { Bell, User, Coins } from 'lucide-react';
+import Leaderboard from './pages/Leaderboard';
+import { Bell, User, Trophy } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -120,6 +121,18 @@ function Navbar() {
         >
           Endorsements
         </Link>
+
+        <Link
+          to="/leaderboard"
+          className={`flex items-center gap-1.5 border-b-2 py-2 md:py-5 font-medium whitespace-nowrap ${
+            isActive("/leaderboard")
+              ? "border-amber-500 text-amber-600"
+              : "border-transparent text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          <Trophy size={14} className={isActive("/leaderboard") ? "text-amber-500" : "text-slate-400"} />
+          Leaderboard
+        </Link>
       </div>
 
       {/* 3. Profile & Actions (Right) */}
@@ -186,6 +199,7 @@ function App() {
             <Route path="/matches" element={<SmartMatches />} />
             <Route path="/sessions" element={<Sessions />} />
             <Route path="/session/:sessionId" element={<SessionRoom />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
           </Routes>
         </main>
       </div>

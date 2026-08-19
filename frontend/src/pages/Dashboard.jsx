@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User, BadgeCheck, Coins, Video } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Sparkles, GraduationCap, BookOpen, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Clock, User, BadgeCheck, Coins, Video, Trophy, Award, Loader2, RefreshCw, ChevronRight } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -23,6 +23,32 @@ export default function Dashboard() {
   const [selectedSession, setSelectedSession] = useState('');
   const [endorsementForm, setEndorsementForm] = useState({ skill: '', comment: '' });
   const [submittingEndorsement, setSubmittingEndorsement] = useState(false);
+  const [myBadges, setMyBadges] = useState([]);
+  
+  const [reportLoading, setReportLoading] = useState(false);
+  const [report, setReport] = useState(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportError, setReportError] = useState('');
+  const [reportMissingKey, setReportMissingKey] = useState(false);
+
+  const fetchProgressReport = async () => {
+    setReportLoading(true);
+    setReportError('');
+    setReportMissingKey(false);
+    setReport(null);
+    setReportOpen(true);
+    try {
+      const res = await axios.post(`${BASE_URL}/api/ai/progress-report`, { userId });
+      setReport(res.data.report);
+    } catch (err) {
+      console.error(err);
+      const data = err.response?.data;
+      if (data?.missingKey) setReportMissingKey(true);
+      setReportError(data?.message || 'Failed to generate report. Make sure your backend server is running.');
+    } finally {
+      setReportLoading(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     type: 'teach',
@@ -49,6 +75,7 @@ export default function Dashboard() {
       return;
     }
     fetchData();
+    fetchBadges();
   }, [userId, navigate]);
 
   const fetchData = async () => {
@@ -73,6 +100,17 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
+  const fetchBadges = async () => {
+    if (!userId) return;
+    try {
+      const res = await axios.get(`${BASE_URL}/api/leaderboard/badges/${userId}`);
+      setMyBadges((res.data.badges || []).filter(b => b.earned));
+    } catch (err) {
+      // silently ignore
+    }
+  };
+
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this listing?")) return;
@@ -234,10 +272,47 @@ export default function Dashboard() {
           <Link to="/sessions" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/sessions') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
             <Video size={18} /> Sessions
           </Link>
+          <Link to="/leaderboard" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/leaderboard') ? 'bg-amber-50 text-amber-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
+            <Trophy size={18} className="text-amber-500" /> Leaderboard
+          </Link>
           <Link to="/settings" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive('/settings') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'}`}>
             <SettingsIcon size={18} /> Settings
           </Link>
         </nav>
+
+        {/* Your Badges Mini Panel */}
+        <div className="bg-white/90 backdrop-blur rounded-2xl border border-white/70 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Award size={15} className="text-amber-500" />
+              <span className="text-sm font-bold text-slate-800">Your Badges</span>
+            </div>
+            <Link to="/leaderboard" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+              View all →
+            </Link>
+          </div>
+          {myBadges.length === 0 ? (
+            <div className="text-center py-3">
+              <p className="text-2xl mb-1">🎯</p>
+              <p className="text-xs text-slate-500">No badges yet</p>
+              <p className="text-[11px] text-slate-400 mt-1">Complete sessions to earn badges!</p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {myBadges.map(badge => (
+                <span
+                  key={badge.id}
+                  title={`${badge.name}: ${badge.description}`}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-medium cursor-help
+                    ${{ bronze: 'bg-amber-50 border-amber-200 text-amber-700', silver: 'bg-slate-50 border-slate-300 text-slate-700', gold: 'bg-yellow-50 border-yellow-200 text-yellow-800' }[badge.tier]}
+                  `}
+                >
+                  {badge.icon} {badge.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* MAIN CONTENT */}
@@ -252,12 +327,21 @@ export default function Dashboard() {
             <h1 className="text-4xl font-bold text-slate-900 mb-2">Shape your skill story.</h1>
             <p className="text-slate-500 text-lg">The more specific you are, the better your matches become.</p>
           </div>
-          <button
-            onClick={() => openModal('teach')}
-            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full font-semibold hover:opacity-95 flex items-center gap-2 shadow-[0_12px_30px_-12px_rgba(37,99,235,0.7)]"
-          >
-            <Plus size={18} /> Add a skill
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={fetchProgressReport}
+              className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white rounded-full font-semibold hover:opacity-95 flex items-center gap-2 shadow-[0_12px_30px_-12px_rgba(147,51,234,0.7)]"
+            >
+              {reportLoading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+              Get My Progress Report
+            </button>
+            <button
+              onClick={() => openModal('teach')}
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full font-semibold hover:opacity-95 flex items-center gap-2 shadow-[0_12px_30px_-12px_rgba(37,99,235,0.7)]"
+            >
+              <Plus size={18} /> Add a skill
+            </button>
+          </div>
         </div>
 
         {/* Teach Section */}
@@ -349,6 +433,129 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* Progress Report Modal */}
+      {reportOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl my-8 overflow-hidden relative border border-white/20">
+            {/* Header background with gradient */}
+            <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-500">
+               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+            </div>
+            
+            <div className="relative pt-8 px-8 pb-6 flex justify-between items-start">
+              <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-sm font-bold flex items-center gap-2 border border-white/30 shadow-sm">
+                <Sparkles size={16} /> AI Progress Report
+              </div>
+              <button onClick={() => setReportOpen(false)} className="bg-black/10 hover:bg-black/20 text-white p-2 rounded-full transition-colors backdrop-blur-md border border-white/20">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="px-8 pb-8 relative z-10">
+              {reportLoading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 size={48} className="animate-spin text-fuchsia-500 mb-4" />
+                  <p className="text-slate-600 font-medium">Analysing your activity...</p>
+                  <p className="text-slate-400 text-sm mt-1">Generating your personalised report</p>
+                </div>
+              ) : reportError ? (
+                <div className="mt-8">
+                  {reportMissingKey ? (
+                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
+                      <div className="text-4xl mb-3">🔑</div>
+                      <h3 className="font-bold text-amber-900 text-lg mb-2">Gemini API Key Required</h3>
+                      <p className="text-amber-800 text-sm mb-4 leading-relaxed">
+                        To generate AI progress reports, add your Google Gemini API key to the backend{' '}
+                        <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">.env</code> file:
+                      </p>
+                      <div className="bg-white border border-amber-200 rounded-xl p-3 font-mono text-xs text-left text-slate-700 mb-4 select-all">
+                        GEMINI_API_KEY=<span className="text-violet-600">your_key_here</span>
+                      </div>
+                      <p className="text-amber-700 text-xs">
+                        Get a free key at{' '}
+                        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="font-bold underline hover:text-amber-900">
+                          aistudio.google.com/apikey
+                        </a>
+                        , then restart your backend server.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-red-50 text-red-700 p-6 rounded-2xl border border-red-100 flex flex-col items-center text-center py-10">
+                      <div className="text-4xl mb-3">⚠️</div>
+                      <p className="font-semibold text-lg mb-2">Something went wrong</p>
+                      <p className="text-sm opacity-80 max-w-sm">{reportError}</p>
+                      <button
+                        onClick={fetchProgressReport}
+                        className="mt-5 px-5 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-full text-sm font-semibold transition-colors"
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : report ? (
+                <div className="space-y-6 mt-2">
+                  <h2 className="text-3xl font-black text-slate-900 leading-tight">
+                    {report.headline}
+                  </h2>
+                  <p className="text-lg text-slate-600 leading-relaxed">
+                    {report.summary}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {report.strengths?.map((strength, i) => (
+                      <span key={i} className="bg-slate-100 text-slate-700 px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 flex items-center gap-2">
+                        <BadgeCheck size={16} className="text-emerald-500" /> {strength}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4 pt-4">
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-20 text-4xl">🎉</div>
+                      <h4 className="text-amber-800 font-bold mb-2 flex items-center gap-2"><Award size={18} /> Recent Win</h4>
+                      <p className="text-amber-900/80 text-sm font-medium leading-relaxed">{report.recentWin}</p>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-sm">
+                      <h4 className="text-slate-800 font-bold mb-2 flex items-center gap-2"><Trophy size={18} className="text-blue-500" /> Next Milestone</h4>
+                      <div className="flex items-start gap-3">
+                        <div className="text-3xl bg-white w-12 h-12 flex items-center justify-center rounded-xl shadow-sm border border-slate-100 shrink-0">{report.nextBadge?.icon}</div>
+                        <div>
+                          <p className="font-bold text-slate-900 text-sm">{report.nextBadge?.name}</p>
+                          <p className="text-xs text-slate-500 mt-1">{report.nextBadge?.gap}</p>
+                          <p className="text-xs text-blue-600 font-semibold mt-1">{report.nextBadge?.action}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0 text-blue-600">
+                      <Users size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 mb-1">Recommendation</h4>
+                      <p className="text-slate-600 text-sm mb-3">{report.recommendation}</p>
+                      <Link to="/matches" className="inline-flex items-center gap-1 text-sm font-bold text-blue-600 hover:text-blue-700">
+                        View matches <ChevronRight size={16} />
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div className="text-center pt-6 border-t border-slate-100">
+                    <p className="italic text-slate-500 text-lg font-medium">"{report.motivationalClose}"</p>
+                    <div className="flex items-center justify-center gap-2 mt-6 text-xs text-slate-400">
+                      <Sparkles size={12} /> Powered by Gemini
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {isModalOpen && (
