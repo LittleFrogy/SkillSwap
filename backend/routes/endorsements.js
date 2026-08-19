@@ -37,7 +37,8 @@ router.get('/sessions', async (req, res) => {
         completedAt: session.scheduledTime, // Use scheduledTime as completedAt for now
         partnerUserId: partner ? partner._id : null,
         partnerName: partner ? partner.fullName : 'Unknown partner',
-        status: session.status
+        status: session.status,
+        role: isTeacher ? 'teacher' : 'learner'
       };
     });
 
