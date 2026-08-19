@@ -21,7 +21,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 
-const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\\/$/, "");
+const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, "");
 const CREDITS_API = `${BASE_URL}/api/credits`;
 
 export default function SkillCredits() {

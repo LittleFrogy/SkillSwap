@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Sparkles, MessageCircle, User, ArrowRightLeft, MapPin, Grid, BookMarked, Users, Settings as SettingsIcon, Filter, Search, MoreHorizontal, Clock, Video } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\\/$/, "");
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, "");
 
 export default function SmartMatches() {
   const [matches, setMatches] = useState([]);

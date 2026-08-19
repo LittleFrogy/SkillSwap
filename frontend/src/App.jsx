@@ -18,7 +18,7 @@ import OpenSource from './pages/OpenSource';
 import { Bell, User, Trophy, GitFork } from 'lucide-react';
 import { initPushNotifications } from './utils/pushNotifications';
 
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\\/$/, "");
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
 
 function Navbar() {
   const location = useLocation();

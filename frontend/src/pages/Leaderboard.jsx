@@ -6,7 +6,7 @@ import {
   Coins, Award, Crown, ChevronUp, ChevronDown, Minus, Lock
 } from 'lucide-react';
 
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\\/$/, "");
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, "");
 
 // ─── Badge Definitions (mirrors backend) ─────────────────────────────────────
 const BADGE_DEFINITIONS = [

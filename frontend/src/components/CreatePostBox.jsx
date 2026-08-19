@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import axios from "axios";
 import { Image, X } from "lucide-react";
 
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\\/$/, "");
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
 
 export default function CreatePostBox({ onPostCreated }) {
   const storedName = localStorage.getItem("fullName") || localStorage.getItem("username");

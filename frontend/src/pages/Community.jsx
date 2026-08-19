@@ -4,7 +4,7 @@ import CreatePostBox from "../components/CreatePostBox";
 import PostCard from "../components/PostCard";
 import { TrendingUp, Award, Star, Users, Zap, ChevronRight } from "lucide-react";
 
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\\/$/, "");
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
 
 // Trending Skills Sidebar Card
 
