@@ -14,6 +14,7 @@ export default function Sessions() {
   // Endorsement Modal State
   const [isEndorseModalOpen, setIsEndorseModalOpen] = useState(false);
   const [selectedSessionForEndorsement, setSelectedSessionForEndorsement] = useState(null);
+  const [endorsementType, setEndorsementType] = useState('Great Mentor');
   const [endorsementComment, setEndorsementComment] = useState('');
   const [submittingEndorsement, setSubmittingEndorsement] = useState(false);
 
@@ -81,10 +82,12 @@ export default function Sessions() {
         toUserId: partner._id,
         sessionId: selectedSessionForEndorsement._id,
         skill: selectedSessionForEndorsement.skill,
+        endorsementType: endorsementType,
         comment: endorsementComment
       });
       alert('Endorsement sent successfully!');
       setIsEndorseModalOpen(false);
+      setEndorsementType('Great Mentor');
       setEndorsementComment('');
     } catch (err) {
       console.error(err);
@@ -224,14 +227,28 @@ export default function Sessions() {
               
               <form onSubmit={handleEndorseSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Your Comment</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Endorsement Type</label>
+                  <select 
+                    value={endorsementType} 
+                    onChange={e => setEndorsementType(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-slate-300 outline-none text-sm focus:ring-2 focus:ring-emerald-500 bg-white"
+                  >
+                    <option value="Great Mentor">Great Mentor</option>
+                    <option value="Technical Expert">Technical Expert</option>
+                    <option value="Clear Communicator">Clear Communicator</option>
+                    <option value="Patient Teacher">Patient Teacher</option>
+                    <option value="Fast Learner">Fast Learner</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Optional Comment</label>
                   <textarea 
-                    required 
                     rows="3" 
                     value={endorsementComment} 
                     onChange={e => setEndorsementComment(e.target.value)} 
                     className="w-full p-3 rounded-xl border border-slate-300 outline-none text-sm focus:ring-2 focus:ring-emerald-500 resize-none" 
-                    placeholder="E.g., Great mentor, explained things very clearly!"
+                    placeholder="E.g., Explained things very clearly! (Optional)"
                   ></textarea>
                 </div>
 

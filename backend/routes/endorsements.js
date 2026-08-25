@@ -51,11 +51,14 @@ router.get('/sessions', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const userId = req.query.userId;
+    const type = req.query.type || 'received'; // 'received' or 'given'
+
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: 'Valid User ID required' });
     }
 
-    let endorsements = await Endorsement.find({ toUserId: userId }).sort({ createdAt: -1 });
+    let query = type === 'given' ? { fromUserId: userId } : { toUserId: userId };
+    let endorsements = await Endorsement.find(query).sort({ createdAt: -1 });
     res.json(endorsements.map((item) => summarizeEndorsement(item)));
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -64,7 +67,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { fromUserId, toUserId, sessionId, skill, comment } = req.body;
+    const { fromUserId, toUserId, sessionId, skill, endorsementType, comment } = req.body;
     
     if (!mongoose.Types.ObjectId.isValid(sessionId) || !mongoose.Types.ObjectId.isValid(fromUserId)) {
       return res.status(400).json({ message: 'Invalid ID formats' });
@@ -91,7 +94,8 @@ router.post('/', async (req, res) => {
       toUserName: toUser ? toUser.fullName : 'Unknown',
       sessionId,
       skill,
-      comment,
+      endorsementType: endorsementType || 'Great Partner',
+      comment: comment || '',
       visible: true
     };
 
@@ -104,6 +108,7 @@ router.post('/', async (req, res) => {
       listing.endorsements.push({
         fromUserId: saved.fromUserId,
         fromUserName: saved.fromUserName,
+        endorsementType: saved.endorsementType,
         comment: saved.comment,
         skill: saved.skill,
         visible: saved.visible,
@@ -118,21 +123,41 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id/visibility', async (req, res) => {
+
+
+router.delete('/:id', async (req, res) => {
   try {
-    const { visible } = req.body;
-    
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: 'Invalid endorsement ID' });
     }
 
+    const userId = req.query.userId;
     const endorsement = await Endorsement.findById(req.params.id);
-    if (!endorsement) return res.status(404).json({ message: 'Endorsement not found' });
     
-    endorsement.visible = visible;
-    await endorsement.save();
+    if (!endorsement) {
+      return res.status(404).json({ message: 'Endorsement not found' });
+    }
     
-    return res.json(summarizeEndorsement(endorsement));
+    if (userId && endorsement.fromUserId !== userId) {
+      return res.status(403).json({ message: 'Not authorized to delete this endorsement' });
+    }
+
+    const { toUserId, skill, fromUserId } = endorsement;
+
+    await Endorsement.findByIdAndDelete(req.params.id);
+
+    // Also remove it from the corresponding listing if it exists
+    const listing = await Listing.findOne({ userId: toUserId, skill });
+    if (listing && listing.endorsements) {
+      // Remove endorsement with matching fromUserId and skill (in case of multiple skills)
+      listing.endorsements = listing.endorsements.filter(
+        (e) => e.fromUserId !== fromUserId
+      );
+      listing.markModified('endorsements');
+      await listing.save();
+    }
+
+    return res.json({ message: 'Endorsement deleted successfully', id: req.params.id });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

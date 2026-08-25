@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Eye, EyeOff, Sparkles, ShieldCheck } from 'lucide-react';
+import { Sparkles, ShieldCheck, Trash2 } from 'lucide-react';
 
 const API_URL = `${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, "")}/api/endorsements`;
 
@@ -9,6 +9,7 @@ export default function Endorsements() {
   const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
   const [endorsements, setEndorsements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('received'); // 'received' or 'given'
 
   const navigate = useNavigate();
 
@@ -17,12 +18,13 @@ export default function Endorsements() {
       navigate('/signin');
       return;
     }
-    fetchEndorsements();
-  }, [userId, navigate]);
+    fetchEndorsements(activeTab);
+  }, [userId, navigate, activeTab]);
 
-  const fetchEndorsements = async () => {
+  const fetchEndorsements = async (tab) => {
+    setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}?userId=${userId}`);
+      const res = await axios.get(`${API_URL}?userId=${userId}&type=${tab}`);
       setEndorsements(res.data);
     } catch (err) {
       console.error(err);
@@ -31,20 +33,18 @@ export default function Endorsements() {
     }
   };
 
-  const toggleVisibility = async (endorsement) => {
+  const handleDelete = async (endorsement) => {
+    if (!window.confirm("Are you sure you want to delete this endorsement?")) {
+      return;
+    }
     try {
-      const updated = await axios.put(`${API_URL}/${endorsement.id || endorsement._id}/visibility`, {
-        visible: !endorsement.visible
-      });
-      setEndorsements((current) => current.map((item) => (item.id === updated.data.id || item._id === updated.data.id ? updated.data : item)));
+      await axios.delete(`${API_URL}/${endorsement.id || endorsement._id}?userId=${userId}`);
+      setEndorsements((current) => current.filter((item) => (item.id || item._id) !== (endorsement.id || endorsement._id)));
     } catch (err) {
       console.error(err);
+      alert('Failed to delete endorsement');
     }
   };
-
-  if (loading) {
-    return <div className="p-8 text-slate-500">Loading endorsements...</div>;
-  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -54,15 +54,33 @@ export default function Endorsements() {
             <ShieldCheck size={20} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Received endorsements</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Endorsements</h1>
             <p className="text-sm text-slate-500">Public trust signals from completed sessions.</p>
           </div>
         </div>
+        
+        {/* Tabs */}
+        <div className="flex gap-4 mt-6 border-b border-slate-200">
+          <button 
+            onClick={() => setActiveTab('received')}
+            className={`pb-3 px-2 font-bold text-sm transition-colors border-b-2 ${activeTab === 'received' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            Received ({activeTab === 'received' && !loading ? endorsements.length : '...'})
+          </button>
+          <button 
+            onClick={() => setActiveTab('given')}
+            className={`pb-3 px-2 font-bold text-sm transition-colors border-b-2 ${activeTab === 'given' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            Given ({activeTab === 'given' && !loading ? endorsements.length : '...'})
+          </button>
+        </div>
       </div>
 
-      {endorsements.length === 0 ? (
+      {loading ? (
+        <div className="p-8 text-slate-500 text-center">Loading endorsements...</div>
+      ) : endorsements.length === 0 ? (
         <div className="bg-white/95 backdrop-blur rounded-[28px] border border-white/70 p-10 text-center text-slate-500 shadow-[0_20px_45px_-24px_rgba(15,23,42,0.2)]">
-          No endorsements yet. Complete a session and ask your partner to endorse you.
+          No endorsements {activeTab} yet.
         </div>
       ) : (
         <div className="grid gap-4">
@@ -70,21 +88,32 @@ export default function Endorsements() {
             <div key={endorsement.id || endorsement._id} className="bg-white/95 backdrop-blur rounded-[24px] border border-white/70 p-5 shadow-[0_22px_45px_-24px_rgba(15,23,42,0.34)]">
               <div className="flex justify-between items-start gap-4">
                 <div>
-                  <div className="flex items-center gap-2 text-emerald-600 font-semibold text-sm mb-2">
-                    <Sparkles size={16} /> {endorsement.skill}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="flex items-center gap-1 text-emerald-600 font-semibold text-sm bg-emerald-50 px-2 py-1 rounded-md">
+                      <Sparkles size={14} /> {endorsement.skill}
+                    </span>
+                    {endorsement.endorsementType && (
+                      <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md">
+                        {endorsement.endorsementType}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-slate-700">“{endorsement.comment}”</p>
+                  {endorsement.comment && <p className="text-slate-700 italic">“{endorsement.comment}”</p>}
                   <div className="mt-3 text-sm text-slate-500">
-                    <span className="font-medium text-slate-700">{endorsement.fromUserName}</span> • {new Date(endorsement.createdAt).toLocaleDateString()}
+                    <span className="font-medium text-slate-700">
+                      {activeTab === 'received' ? `From ${endorsement.fromUserName}` : `To ${endorsement.toUserName}`} 
+                    </span> • {new Date(endorsement.createdAt).toLocaleDateString()}
                   </div>
                 </div>
-                <button
-                  onClick={() => toggleVisibility(endorsement)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold ${endorsement.visible ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'} shadow-sm`}
-                >
-                  {endorsement.visible ? <Eye size={16} /> : <EyeOff size={16} />}
-                  {endorsement.visible ? 'Visible on profile' : 'Hidden from profile'}
-                </button>
+                {activeTab === 'given' && (
+                  <button
+                    onClick={() => handleDelete(endorsement)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold bg-red-50 text-red-600 hover:bg-red-100 transition-colors shadow-sm`}
+                  >
+                    <Trash2 size={16} />
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}

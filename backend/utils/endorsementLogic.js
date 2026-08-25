@@ -13,10 +13,12 @@ function summarizeEndorsement(endorsement) {
   return {
     id: endorsement._id,
     skill: endorsement.skill,
+    endorsementType: endorsement.endorsementType,
     comment: endorsement.comment,
     visible: endorsement.visible !== false,
     createdAt: endorsement.createdAt,
     fromUserName: endorsement.fromUserName || 'Anonymous',
+    toUserName: endorsement.toUserName || 'Unknown',
     toUserId: endorsement.toUserId,
     fromUserId: endorsement.fromUserId,
     sessionId: endorsement.sessionId
