@@ -27,14 +27,9 @@ const endorsementSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  endorsementType: {
-    type: String,
-    required: true,
-    trim: true,
-    default: 'Great Partner'
-  },
   comment: {
     type: String,
+    required: true,
     trim: true
   },
   visible: {

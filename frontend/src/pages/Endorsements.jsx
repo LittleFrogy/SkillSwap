@@ -92,13 +92,8 @@ export default function Endorsements() {
                     <span className="flex items-center gap-1 text-emerald-600 font-semibold text-sm bg-emerald-50 px-2 py-1 rounded-md">
                       <Sparkles size={14} /> {endorsement.skill}
                     </span>
-                    {endorsement.endorsementType && (
-                      <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md">
-                        {endorsement.endorsementType}
-                      </span>
-                    )}
                   </div>
-                  {endorsement.comment && <p className="text-slate-700 italic">“{endorsement.comment}”</p>}
+                  <p className="text-slate-700 italic">“{endorsement.comment}”</p>
                   <div className="mt-3 text-sm text-slate-500">
                     <span className="font-medium text-slate-700">
                       {activeTab === 'received' ? `From ${endorsement.fromUserName}` : `To ${endorsement.toUserName}`} 

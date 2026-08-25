@@ -26,7 +26,6 @@ test('rejects endorsements for incomplete sessions', () => {
 test('summarizes an endorsement for display', () => {
   const summary = summarizeEndorsement({
     skill: 'Python Programming',
-    endorsementType: 'Great Mentor',
     comment: 'Excellent teaching',
     createdAt: '2026-08-04T12:00:00.000Z',
     visible: true,
@@ -34,7 +33,6 @@ test('summarizes an endorsement for display', () => {
   });
 
   assert.equal(summary.skill, 'Python Programming');
-  assert.equal(summary.endorsementType, 'Great Mentor');
   assert.equal(summary.comment, 'Excellent teaching');
   assert.equal(summary.visible, true);
 });

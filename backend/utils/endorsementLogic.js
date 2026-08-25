@@ -13,7 +13,6 @@ function summarizeEndorsement(endorsement) {
   return {
     id: endorsement._id,
     skill: endorsement.skill,
-    endorsementType: endorsement.endorsementType,
     comment: endorsement.comment,
     visible: endorsement.visible !== false,
     createdAt: endorsement.createdAt,

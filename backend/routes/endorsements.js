@@ -67,7 +67,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { fromUserId, toUserId, sessionId, skill, endorsementType, comment } = req.body;
+    const { fromUserId, toUserId, sessionId, skill, comment } = req.body;
     
     if (!mongoose.Types.ObjectId.isValid(sessionId) || !mongoose.Types.ObjectId.isValid(fromUserId)) {
       return res.status(400).json({ message: 'Invalid ID formats' });
@@ -94,8 +94,7 @@ router.post('/', async (req, res) => {
       toUserName: toUser ? toUser.fullName : 'Unknown',
       sessionId,
       skill,
-      endorsementType: endorsementType || 'Great Partner',
-      comment: comment || '',
+      comment,
       visible: true
     };
 
@@ -108,7 +107,6 @@ router.post('/', async (req, res) => {
       listing.endorsements.push({
         fromUserId: saved.fromUserId,
         fromUserName: saved.fromUserName,
-        endorsementType: saved.endorsementType,
         comment: saved.comment,
         skill: saved.skill,
         visible: saved.visible,
